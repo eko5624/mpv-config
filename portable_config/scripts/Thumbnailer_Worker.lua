@@ -1,7 +1,6 @@
 --[[
 SOURCE_ https://github.com/deus0ww/mpv-conf/blob/master/scripts/Thumbnailer_Worker.lua
-COMMIT_ 20210716 91ae987
-
+COMMIT_ 20220324 49352b0
 搭配osc_lazy的缩略图脚本(2)/(2)
 ]]--
 
@@ -254,7 +253,7 @@ local function add_nice(args)
 	end
 end
 
-local pix_fmt   = 'bgra'
+local pix_fmt   = 'bgr0'
 local scale_ff  = 'scale=w=%d:h=%d:sws_flags=%s:dst_format=' .. pix_fmt
 local scale_mpv = 'scale=w=%d:h=%d:flags=%s'
 local vf_format = ',format=fmt=' .. pix_fmt
@@ -333,6 +332,8 @@ local function create_mpv_command(time, output, force_accurate_seek)
 		concat_args(args, '--frames=1')
 		concat_args(args, state.input_fullpath)
 		-- Filters
+		concat_args(args, '--sws-allow-zimg=no')
+		concat_args(args, '--sws-fast=yes')
 		concat_args(args, '--sws-scaler=', worker_options.mpv_scaler)
 		concat_args(args, video_filters)
 		-- Output
@@ -372,7 +373,7 @@ local function create_ffmpeg_command(time, output, force_accurate_seek)
 		worker_extra.index_name = add_args(args, worker_options.exec_path .. 'ffmpeg')
 		add_args(args, '-hide_banner')
 		add_args(args, '-nostats')
-		add_args(args, '-loglevel', 'warning')
+		add_args(args, '-loglevel', 'error')
 		if not (worker_options.ffmpeg_hwaccel == 'none') then
 			add_args(args, '-hwaccel', worker_options.ffmpeg_hwaccel)
 			add_args(args, '-hwaccel_device', worker_options.ffmpeg_hwaccel_device)
@@ -391,7 +392,8 @@ local function create_ffmpeg_command(time, output, force_accurate_seek)
 		worker_extra.index_skip_frame = add_args(args, '-skip_frame',       accurate_seek and 'noref' or 'nokey')
 		worker_extra.index_time       = add_args(args, '-ss', tostring(is_last_thumbnail and floor(time) or time))
 		add_args(args, '-guess_layout_max', '0')
-		add_args(args, '-an', '-sn')
+		add_args(args, '-an')
+		add_args(args, '-sn')
 		add_args(args, '-i', state.input_fullpath)
 		add_args(args, '-map_metadata', '-1')
 		add_args(args, '-map_chapters', '-1')
