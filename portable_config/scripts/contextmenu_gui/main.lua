@@ -5,7 +5,6 @@
 ** Extension_ Thomas Carmichael https://gitlab.com/carmanaught **
 *****************************************************************
 mpv的tcl图形菜单的核心脚本
-
 建议在 input.conf 中绑定右键以支持唤起菜单
 MOUSE_BTN2   script-message-to contextmenu_gui contextmenu_tk
 --]]
@@ -53,17 +52,17 @@ local function round(num, numDecimalPlaces)
     return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 end
 
--- Edition menu functions
-local function enableEdition()
-    local editionState = false
-    if (propNative("edition-list/count") < 1) then editionState = true end
-    return editionState
+-- 版本（Edition）子菜单
+local function inspectEdition()
+    local editionDisable = false
+    if (propNative("edition-list/count") ~= nil and propNative("edition-list/count") < 1) then editionDisable = true end
+    return editionDisable
 end
 
 local function checkEdition(editionNum)
-    local editionEnable, editionCur = false, propNative("edition")
-    if (editionNum == editionCur) then editionEnable = true end
-    return editionEnable
+    local editionState, editionCur = false, propNative("current-edition")
+    if (editionNum == editionCur) then editionState = true end
+    return editionState
 end
 
 local function editionMenu()
@@ -76,7 +75,7 @@ local function editionMenu()
             if not (editionTitle) then editionTitle = "Edition " .. (editionNum + 1) end
 
             local editionCommand = "set edition " .. editionNum
-            table.insert(editionMenuVal, {RADIO, editionTitle, "", editionCommand, function() return checkEdition(editionNum) end, false, true})
+            table.insert(editionMenuVal, {RADIO, editionTitle, "", editionCommand, function() return checkEdition(editionNum) end, false})
         end
     else
         table.insert(editionMenuVal, {COMMAND, "No Editions", "", "", "", true})
@@ -85,11 +84,11 @@ local function editionMenu()
     return editionMenuVal
 end
 
--- Chapter menu functions
-local function enableChapter()
-    local chapterEnable = false
-    if (propNative("chapter-list/count") < 1) then chapterEnable = true end
-    return chapterEnable
+-- 章节子菜单
+local function inspectChapter()
+    local chapterDisable = false
+    if (propNative("chapter-list/count") ~= nil and propNative("chapter-list/count") < 1) then chapterDisable = true end
+    return chapterDisable
 end
 
 local function checkChapter(chapterNum)
@@ -150,10 +149,10 @@ local function checkTrack(trackNum)
 end
 
 -- 视频轨子菜单
-local function enableVidTrack()
-    local vidTrackEnable, vidTracks = false, trackCount("video")
-    if (#vidTracks < 1) then vidTrackEnable = true end
-    return vidTrackEnable
+local function inspectVidTrack()
+    local vidTrackDisable, vidTracks = false, trackCount("video")
+    if (#vidTracks < 1) then vidTrackDisable = true end
+    return vidTrackDisable
 end
 
 local function vidTrackMenu()
@@ -567,7 +566,7 @@ mp.register_event("file-loaded", function()
 -- 二级菜单 —— 文件
         file_menu = {
             {CHECK, "播放/暂停", "", "cycle pause", function() return propNative("pause") end, false, true},
---            {COMMAND, "停止", "", "stop", "", false},
+            {COMMAND, "停止", "", "stop", "", false},
             {SEP},
             {COMMAND, "显示OSD时间轴", "", "no-osd cycle-values osd-level 3 1", "", false},
             {RADIO, "开", "", "set osd-level 3", function() return stateOsdLevel(3) end, false},
@@ -592,8 +591,8 @@ mp.register_event("file-loaded", function()
             {COMMAND, "下一帧", "", "frame-step", "", false, true},
             {COMMAND, "后退10秒", "", "seek -10", "", false, true},
             {COMMAND, "前进10秒", "", "seek 10", "", false, true},
---            {CASCADE, "Title/Edition", "edition_menu", "", "", function() return enableEdition() end},
-            {CASCADE, "章节", "chapter_menu", "", "", function() return enableChapter() end},
+            {CASCADE, "版本（Edition）", "edition_menu", "", "", function() return inspectEdition() end},
+            {CASCADE, "章节", "chapter_menu", "", "", function() return inspectChapter() end},
         },
 
         -- Use functions returning tables, since we don't need these menus if there aren't any editions or any chapters to seek through.
@@ -634,7 +633,7 @@ mp.register_event("file-loaded", function()
 
 -- 二级菜单 —— 视频
         video_menu = {
-            {CASCADE, "轨道", "vidtrack_menu", "", "", function() return enableVidTrack() end},
+            {CASCADE, "轨道", "vidtrack_menu", "", "", function() return inspectVidTrack() end},
             {SEP},
             {CASCADE, "解码模式", "hwdec_menu", "", "", false},
             {CHECK, "去色带", "", "cycle deband", function() return propNative("deband") end, false},
@@ -801,7 +800,6 @@ mp.register_event("file-loaded", function()
             {RADIO, "Right", "", "set video-align-x 1", function() return stateAlign("x",1) end, false, true},
             {CHECK, "Flip Vertically", "", "vf toggle vflip", function() return stateFlip("vflip") end, false, true},
             {CHECK, "Flip Horizontally", "", "vf toggle hflip", function() return stateFlip("hflip") end, false, true}
-
             {RADIO, "Display on Letterbox", "", "set image-subs-video-resolution \"no\"", function() return stateSubPos(false) end, false, true},
             {RADIO, "Display in Video", "", "set image-subs-video-resolution \"yes\"", function() return stateSubPos(true) end, false, true},
             {COMMAND, "Move Up", "", function() movePlaylist("up") end, "", function() return (propNative("playlist-count") < 2) and true or false end, true},
@@ -833,4 +831,3 @@ local menuEngine = require "contextmenu_gui_engine"
 mp.register_script_message("contextmenu_tk", function()
     menuEngine.createMenu(menuList, "context_menu", -1, -1, "tk")
 end)
-
