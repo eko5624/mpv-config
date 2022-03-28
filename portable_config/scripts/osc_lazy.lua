@@ -1,9 +1,8 @@
 --[[
 SOURCE_ https://github.com/mpv-player/mpv/blob/master/player/lua/osc.lua
-COMMIT_ 20211127 448fe02
+COMMIT_ 20220206 0197729
 SOURCE_ https://github.com/deus0ww/mpv-conf/blob/master/scripts/Thumbnailer_OSC.lua
-COMMIT_ 20211202 cc9602c
-
+COMMIT_ 20220207 8b57a11
 改进版本的OSC，须禁用原始mpv的内置OSC，且不兼容其它OSC类脚本，实现全部功能需搭配额外两个缩略图引擎脚本（Thumbnailer）。
 示例在 input.conf 中写入：
 SHIFT+DEL  script-binding osc_lazy/visibility  # 切换osc_lazy的可见性
@@ -85,6 +84,9 @@ local user_opts = {
     sub_title = " ",                    -- bottombox布局的右侧子标题
     sub_title2 = "对比[${contrast}]  明度[${brightness}]  伽马[${gamma}]  饱和[${saturation}]  色相[${hue}]",
                                         -- bottombox布局的临时右侧子标题
+    showonpause = false,                -- 在暂停时常驻 OSC
+    showonstart = false,                -- 在播放开始或当播放下一个文件时显示 OSC
+    showonseek = false,                 -- 在跳转时显示 OSC
     font = "sans",                      -- OSC的全局字体显示
     font_mono = "sans",
     font_bold = 500,
@@ -633,6 +635,8 @@ local state = {
     border = true,
     maximized = false,
     osd = mp.create_osd_overlay("ass-events"),
+    chapter_list = {},                      -- sorted by time
+    lastvisibility = user_opts.visibility,  -- 如果showonpause，则在暂停时保存最后一次的可见性
 }
 
 local window_control_box_width = 80
@@ -1103,6 +1107,11 @@ function prepare_elements()
             element.layout.alpha[1] = 136
             element.eventresponder = nil
         end
+
+        -- 禁用时灰化相关元素
+        if (element.off) then
+            element.layout.alpha[1] = 136
+        end
     end
 end
 
@@ -1113,16 +1122,13 @@ end
 
 -- returns nil or a chapter element from the native property chapter-list
 function get_chapter(possec)
-    local cl = mp.get_property_native("chapter-list", {})
-    local ch = nil
+    local cl = state.chapter_list  -- sorted, get latest before possec, if any
 
-    -- chapters might not be sorted by time. find nearest-before/at possec
-    for n=1, #cl do
-        if possec >= cl[n].time and (not ch or cl[n].time > ch.time) then
-            ch = cl[n]
+    for n=#cl,1,-1 do
+        if possec >= cl[n].time then
+            return cl[n]
         end
     end
-    return ch
 end
 
 function render_elements(master_ass)
@@ -1947,6 +1953,12 @@ layouts["bottombox"] = function ()
     lo.style = osc_styles.bb_downtitle
     lo.button.maxchars = user_opts.boxmaxchars
 
+    if (user_opts.layout == "bottombox") then
+        if (osc_param.display_aspect < 1) then
+            lo.button.maxchars = 50
+        end
+    end
+
     -- 右侧子标题
 
     lo = add_layout("sub_title")
@@ -1991,10 +2003,14 @@ layouts["bottombox"] = function ()
         {x = posX - (bigbtndist * 3), y = bigbtnrowY, an = 5, w = 25, h = 25}
     lo.style = osc_styles.bb_bigButton3
 
+    if (osc_param.display_aspect < 1) then lo.geometry.x = 150 end
+
     lo = add_layout("pl_next")
     lo.geometry =
         {x = posX + (bigbtndist * 3), y = bigbtnrowY, an = 5, w = 25, h = 25}
     lo.style = osc_styles.bb_bigButton3
+
+    if (osc_param.display_aspect < 1) then lo.geometry.x = osc_geo.w - 150 end
 
     -- 快捷按钮
 
@@ -2002,6 +2018,8 @@ layouts["bottombox"] = function ()
     lo.geometry =
         {x = posX - pos_offsetX + 40, y = bigbtnrowY, an = 5, w = 70, h = 25}
     lo.style = osc_styles.bb_Atracks
+
+    if (osc_param.display_aspect < 1) then lo.geometry.x = 40 end
 
     lo = add_layout("cy_sub")
     lo.geometry =
@@ -2018,12 +2036,16 @@ layouts["bottombox"] = function ()
         {x = posX + pos_offsetX - (30 * 2) - osc_geo.p, y = bigbtnrowY, an = 4, w = 25, h = 25}
     lo.style = osc_styles.bb_volume
 
+    if (osc_param.display_aspect < 1) then lo.geometry.x = osc_geo.w - 40 end
+
     -- 联动内置的stats.lua
 
     lo = add_layout("lua_stats")
     lo.geometry =
         {x = posX + pos_offsetX - (45 * 2) - osc_geo.p, y = bigbtnrowY + 2, an = 5, w = 25, h = 25}
     lo.style = osc_styles.bb_lua_stats
+
+    if (osc_param.display_aspect < 1) then lo.geometry.x = osc_geo.w - 60 end
 
     --
     -- 进度条
@@ -2507,6 +2529,7 @@ function osc_init()
 
     -- sub_title -- bottombox的右侧子标题
     ne = new_element("sub_title", "button")
+    ne.visible = (osc_param.display_aspect > 1)
 
     ne.content = function ()
         local title = state.forced_sub_title or
@@ -2568,8 +2591,12 @@ function osc_init()
     ne.eventresponder["mbtn_left_up"] =
         function () mp.commandv("cycle", "pause") end
 
-    --skipback
+    --skipback -- 进度（前滚）
     ne = new_element("skipback", "button")
+
+    if (user_opts.layout == "bottombox") then
+        ne.visible = (osc_param.display_aspect > 1)
+    end
 
     ne.softrepeat = true
     ne.content = "\238\128\132"
@@ -2580,8 +2607,12 @@ function osc_init()
     ne.eventresponder["mbtn_right_down"] =
         function () mp.commandv("seek", -30, "relative", "keyframes") end
 
-    --skipfrwd
+    --skipfrwd -- 进度（后滚）
     ne = new_element("skipfrwd", "button")
+
+    if (user_opts.layout == "bottombox") then
+        ne.visible = (osc_param.display_aspect > 1)
+    end
 
     ne.softrepeat = true
     ne.content = "\238\128\133"
@@ -2592,8 +2623,12 @@ function osc_init()
     ne.eventresponder["mbtn_right_down"] =
         function () mp.commandv("seek", 60, "relative", "keyframes") end
 
-    --ch_prev
+    --ch_prev --章节（上一个）
     ne = new_element("ch_prev", "button")
+
+    if (user_opts.layout == "bottombox") then
+        ne.visible = (osc_param.display_aspect > 1)
+    end
 
     ne.enabled = have_ch
     ne.content = "\238\132\132"
@@ -2609,8 +2644,12 @@ function osc_init()
     ne.eventresponder["mbtn_right_up"] =
         function () show_message(get_chapterlist(), 3) end
 
-    --ch_next
+    --ch_next --章节（下一个）
     ne = new_element("ch_next", "button")
+
+    if (user_opts.layout == "bottombox") then
+        ne.visible = (osc_param.display_aspect > 1)
+    end
 
     ne.enabled = have_ch
     ne.content = "\238\132\133"
@@ -2633,6 +2672,7 @@ function osc_init()
     ne = new_element("cy_audio", "button")
 
     ne.enabled = (#tracks_osc.audio > 0)
+    ne.off = (get_track('audio') == 0)
     ne.content = function ()
         local aid = "–"
         if not (get_track("audio") == 0) then
@@ -2656,7 +2696,12 @@ function osc_init()
     --cy_sub --全局字幕按钮增强
     ne = new_element("cy_sub", "button")
 
+    if (user_opts.layout == "bottombox") then
+        ne.visible = (osc_param.display_aspect > 1)
+    end
+
     ne.enabled = (#tracks_osc.sub > 0)
+    ne.off = (get_track('sub') == 0)
     ne.content = function ()
         local sid = "–"
         if not (get_track("sub") == 0) then
@@ -2677,8 +2722,13 @@ function osc_init()
     ne.eventresponder["wheel_down_press"] =
         function () set_track("sub", 1) end
 
-    --tog_fs
+    --tog_fs --切换全屏/窗口化
     ne = new_element("tog_fs", "button")
+
+    if (user_opts.layout == "bottombox") then
+        ne.visible = (osc_param.display_aspect > 1)
+    end
+
     ne.content = function ()
         if (state.fullscreen) then
             return ("\238\132\137")
@@ -2979,7 +3029,18 @@ function osc_visible(visible)
 end
 
 function pause_state(name, enabled)
+    -- 暂停状态检查
     state.paused = enabled
+    mp.add_timeout(0.1, function() state.osd:update() end)
+    if user_opts.showonpause then
+        if enabled then
+            state.lastvisibility = user_opts.visibility
+            visibility_mode("always", true)
+            show_osc()
+        else
+            visibility_mode(state.lastvisibility, true)
+        end
+    end
     request_tick()
 end
 
@@ -3428,9 +3489,14 @@ update_duration_watch()
 
 mp.register_event("shutdown", shutdown)
 mp.register_event("start-file", request_init)
+if user_opts.showonstart then mp.register_event("file-loaded", show_osc) end -- 暂停相关
+if user_opts.showonseek then mp.register_event("seek", show_osc) end         -- 暂停相关
 mp.observe_property("track-list", nil, request_init)
 mp.observe_property("playlist", nil, request_init)
-mp.observe_property("chapter-list", nil, function()
+mp.observe_property("chapter-list", "native", function(_, list)
+    list = list or {}  -- safety, shouldn't return nil
+    table.sort(list, function(a, b) return a.time < b.time end)
+    state.chapter_list = list
     update_duration_watch()
     request_init()
 end)
