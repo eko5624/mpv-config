@@ -2,8 +2,7 @@ name: Executable flag setting
 
 on: 
    workflow_dispatch:
-   schedule:
-     - cron: '0 0 * * *' #设置定时任务
+
 jobs:
   build:
     runs-on: ubuntu-latest
