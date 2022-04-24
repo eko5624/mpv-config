@@ -1,0 +1,30 @@
+name: autoupdate
+
+on: 
+   workflow_dispatch:
+   schedule:
+     - cron: '0 0 * * *' #设置定时任务
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.owner.id == github.event.sender.id && github.actor != 'eko5624' }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install git
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install git
+    - name: Set env
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    - name: Executable flag setting
+      run: |
+        git remote -v
+        git fetch orgin
+        git checkout main
+        git add --chmod=+x macos_config/install.command
+        git push -f origin dev
