@@ -27,4 +27,4 @@ jobs:
         git fetch orgin
         git checkout main
         git add --chmod=+x macos_config/install.command
-        git push -f origin dev
+        git push -f origin main
