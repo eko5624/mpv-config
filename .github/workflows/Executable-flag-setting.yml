@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.repository.owner.id == github.event.sender.id && github.actor != 'eko5624' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
