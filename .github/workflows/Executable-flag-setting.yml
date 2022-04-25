@@ -22,5 +22,6 @@ jobs:
     - name: Executable flag setting
       run: |
         git checkout test
-        git add --chmod=+x macos_config/install.command
-        git push -f origin main
+        chmod +x macos_config/install.command
+        git commit macos_config/install.command -m "Executable-flag-setting"
+        git push  
