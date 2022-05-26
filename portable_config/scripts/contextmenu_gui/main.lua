@@ -27,17 +27,6 @@ local opt = {
     filter08B = "", filter08C = "", filter08D = "", filter08G = false,
     filter09B = "", filter09C = "", filter09D = "", filter09G = false,
     filter10B = "", filter10C = "", filter10D = "", filter10G = false,
-
-    shader01B = "", shader01C = "", shader01D = "", shader01G = false,
-    shader02B = "", shader02C = "", shader02D = "", shader02G = false,
-    shader03B = "", shader03C = "", shader03D = "", shader03G = false,
-    shader04B = "", shader04C = "", shader04D = "", shader04G = false,
-    shader05B = "", shader05C = "", shader05D = "", shader05G = false,
-    shader06B = "", shader06C = "", shader06D = "", shader06G = false,
-    shader07B = "", shader07C = "", shader07D = "", shader07G = false,
-    shader08B = "", shader08C = "", shader08D = "", shader08G = false,
-    shader09B = "", shader09C = "", shader09D = "", shader09G = false,
-    shader10B = "", shader10C = "", shader10D = "", shader10G = false,
 }
 options.read_options(opt)
 
@@ -539,7 +528,6 @@ mp.register_event("file-loaded", function()
             {CASCADE, "字幕", "subtitle_menu", "", "", false},
             {SEP},
             {CASCADE, "滤镜", "filter_menu", "", "", false},
-            {CASCADE, "着色器", "shader_menu", "", "", false},
             {CASCADE, "其它", "etc_menu", "", "", false},
             {SEP},
             {CASCADE, "关于", "about_menu", "", "", false},
@@ -753,22 +741,6 @@ mp.register_event("file-loaded", function()
             {COMMAND, opt.filter08B, opt.filter08C, opt.filter08D, "", false, opt.filter08G},
             {COMMAND, opt.filter09B, opt.filter09C, opt.filter09D, "", false, opt.filter09G},
             {COMMAND, opt.filter10B, opt.filter10C, opt.filter10D, "", false, opt.filter10G},
-        },
-
--- 二级菜单 —— 着色器
-        shader_menu = {
-            {COMMAND, "清除全部着色器", "", "change-list glsl-shaders clr \"\"", "", false},
-            {SEP},
-            {COMMAND, opt.shader01B, opt.shader01C, opt.shader01D, "", false, opt.shader01G},
-            {COMMAND, opt.shader02B, opt.shader02C, opt.shader02D, "", false, opt.shader02G},
-            {COMMAND, opt.shader03B, opt.shader03C, opt.shader03D, "", false, opt.shader03G},
-            {COMMAND, opt.shader04B, opt.shader04C, opt.shader04D, "", false, opt.shader04G},
-            {COMMAND, opt.shader05B, opt.shader05C, opt.shader05D, "", false, opt.shader05G},
-            {COMMAND, opt.shader06B, opt.shader06C, opt.shader06D, "", false, opt.shader06G},
-            {COMMAND, opt.shader07B, opt.shader07C, opt.shader07D, "", false, opt.shader07G},
-            {COMMAND, opt.shader08B, opt.shader08C, opt.shader08D, "", false, opt.shader08G},
-            {COMMAND, opt.shader09B, opt.shader09C, opt.shader09D, "", false, opt.shader09G},
-            {COMMAND, opt.shader10B, opt.shader10C, opt.shader10D, "", false, opt.shader10G},
         },
 
 -- 二级菜单 —— 其它
