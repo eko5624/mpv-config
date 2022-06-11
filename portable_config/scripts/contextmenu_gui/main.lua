@@ -597,7 +597,6 @@ local function playmenuList()
             {CASCADE, "字幕", "subtitle_menu", "", "", false},
             {SEP},
             {CASCADE, "滤镜", "filter_menu", "", "", false},
-            {CASCADE, "着色器", "shader_menu", "", "", false},
             {CASCADE, "其它", "etc_menu", "", "", false},
             {SEP},
             {CASCADE, "关于", "about_menu", "", "", false},
