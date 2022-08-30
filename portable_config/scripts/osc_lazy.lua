@@ -3,21 +3,21 @@ SOURCE_ https://github.com/mpv-player/mpv/blob/master/player/lua/osc.lua
 COMMIT_ 20220719 ad5a1ac
 SOURCE_ https://github.com/deus0ww/mpv-conf/blob/master/scripts/Thumbnailer_OSC.lua
 COMMIT_ 20220720 7a9e348
+
 改进版本的OSC，须禁用原始mpv的内置OSC，且不兼容其它OSC类脚本，实现全部功能需搭配额外两个缩略图引擎脚本（Thumbnailer）。
 示例在 input.conf 中写入：
 SHIFT+DEL  script-binding osc_lazy/visibility  # 切换osc_lazy的可见性
 --]]
 
-local orig_osc = mp.get_property('osc')
-if orig_osc == 'yes' then
-    local err = "_____\n{\\1c&H0000FF&}注意：\n必须设置 {\\1c&H0000FF&}osc=no\n打开控制台查看更多信息"
-    mp.set_osd_ass(1280, 720, err)
-    mp.set_property('osc', 'no')
-    mp.msg.warn("脚本已自动执行 osc=no 以临时兼容")
-    mp.msg.warn("正确编辑 mpv.conf 重启程序即可")
-    mp.msg.warn("不要在运行中更改参数 --osc 的状态")
-    mp.msg.warn("注意其它osc类脚本亦不应共存")
+function lock_osc(_, value)
+    local info = "检测到原OSC的启用！"
+    if value == true then
+        mp.set_property("osc", "no")
+        mp.osd_message(info)
+        mp.msg.warn(info)
+    end
 end
+mp.observe_property("osc", "bool", lock_osc)
 
 local ipairs,loadfile,pairs,pcall,tonumber,tostring = ipairs,loadfile,pairs,pcall,tonumber,tostring
 local debug,io,math,os,string,table,utf8 = debug,io,math,os,string,table,utf8
