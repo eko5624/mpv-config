@@ -1,18 +1,12 @@
 --[[
-SOURCE_ https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua
-COMMIT_ 20210624 ee27629
-SOURCE_ https://github.com/rossy/mpv-open-file-dialog
-COMMIT_ 20160310 04fe818
-
+SOURCE_ https://github.com/mpv-player/mpv/commit/56e24d535ebf8c67d14a3e6059aa16c8e6e84a7c
+SOURCE_ https://github.com/rossy/mpv-open-file-dialog/commit/04fe818fc703d8c5dcc3a6aabe1caeed8286bdbb
 功能集一：
   列表文件为1时自动填充同目录下的其它文件，可使用对应的 load_plus.conf 管理脚本设置。
-
 功能集二：
   自定义快捷键 在mpv中唤起一个打开文件的窗口用于快速加载文件/网址
-
 功能集三：
   自定义快捷键 双音轨同步播放
-
 示例：在 input.conf 中另起写入下列内容
 w        script-binding    load_plus/import_files   # 打开文件
 W        script-binding    load_plus/import_url     # 打开地址
@@ -21,7 +15,6 @@ ALT+w    script-binding    load_plus/append_sid     # 追加其它字幕（切�
 e        script-binding    load_plus/append_vfSub   # 装载次字幕（滤镜型）
 E        script-binding    load_plus/toggle_vfSub   # 隐藏/显示 当前的次字幕（滤镜型）
 CTRL+e   script-binding    load_plus/remove_vfSub   # 移除次字幕（滤镜型）
-
 F1       script-binding    load_plus/mark_aidA      # 标记当前音轨为A
 F2       script-binding    load_plus/mark_aidB      # 标记当前音轨为B
 F3       script-binding    load_plus/merge2aids     # 合并AB音频轨
@@ -60,7 +53,7 @@ function SetUnion (a,b)
 end
 
 EXTENSIONS_VIDEO = Set {
-    '3gp',
+    '3g2','3gp',
     'amv','asf','avi',
     'f4v','flv',
     'm2ts','m4v','mkv','mov','mp4','mpeg','mpg',
@@ -69,14 +62,15 @@ EXTENSIONS_VIDEO = Set {
     'ts',
     'vob',
     'webm','wmv',
+    'y4m',
 }
 
 EXTENSIONS_AUDIO = Set {
-    'aac','aiff','alac','ape',
+    'aac','aiff','alac','ape','au',
     'dsf',
     'flac',
     'm4a','mp3',
-    'ogg','opus',
+    'oga','ogg','ogm','opus',
     'tak','tta',
     'wav','wma','wv',
 }
@@ -85,11 +79,11 @@ EXTENSIONS_IMAGE = Set {
     'apng','avif',
     'bmp',
     'gif',
-    'heic','heif',
-    'jfif','jpeg','jpg',
+    'j2k', 'jfif','jp2','jpeg','jpg',
     'png',
     'svg',
-    'tif','tiff',
+    'tga','tif','tiff',
+    'uci',
     'webp',
 }
 
@@ -434,6 +428,8 @@ end
 -- 双音轨同步播放
 --
 
+local marked_A = nil
+local marked_B = nil
 function mark_aidA()
 	marked_A = mp.get_property("aid")
 	if marked_A == "auto" or marked_A == "no"
