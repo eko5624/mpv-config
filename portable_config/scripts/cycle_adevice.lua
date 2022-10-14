@@ -10,16 +10,11 @@ CTRL+a  script-binding  cycle_adevice/back
 ALT+a  script-binding  cycle_adevice/next
 ]]--
 
-local opt = require 'mp.options'
 
-local user_opts = {
-    api = ""   -- <wasapi/openal/sdl> 限制音频接口
-}
-
-opt.read_options(user_opts)
-
+local api = ""
 local deviceList = {}
 local function cycle_adevice(s, e, d)
+	api = mp.get_property_native("current-ao") or ""
 	while s ~= e + d do -- until the loop would cycle back to the number we started on
 		if string.find(mp.get_property("audio-device"), deviceList[s].name, 1, true) then
 			while true do
@@ -29,12 +24,12 @@ local function cycle_adevice(s, e, d)
 					s = 0 --then start from the beginning
 				end
 				s = s + d --next device
-				if string.find(deviceList[s].name, user_opts.api, 1, true) then
+				if string.find(deviceList[s].name, api, 1, true) then
 					mp.set_property("audio-device",deviceList[s].name)
 					deviceList[s].description = "■ "..deviceList[s].description
 					local list = "音频输出设备：\n"
 					for i=1,#deviceList do
-						if string.find(deviceList[i].name, user_opts.api, 1, true) then
+						if string.find(deviceList[i].name, api, 1, true) then
 							if deviceList[i].name~=deviceList[s].name then list = list.."□ " end
 							list=list..deviceList[i].description.."\n"
 						end

@@ -1,6 +1,6 @@
 --[[
-SOURCE_ https://github.com/jonniek/mpv-playlistmanager
-COMMIT_ 20210521 bc139f7
+SOURCE_ https://github.com/jonniek/mpv-playlistmanager/commit/07393162f7f78f8188e976f616f1b89813cec741
+
 高级播放列表，用于替换内置的过于简洁的列表
 自定义快捷键方案示例，在 input.conf 中另起一行：
 SHIFT+ENTER  script-binding  playlistmanager/showplaylist
@@ -15,7 +15,7 @@ local settings = {
   --if "no" then you can display the playlist by any of the navigation keys
   dynamic_binds = true,
 
-  -- to bind multiple keys separate them by a space
+  -- dynamic keys - to bind multiple keys separate them by a space
   key_moveup = "UP",
   key_movedown = "DOWN",
   key_movepageup = "PGUP",
@@ -67,17 +67,16 @@ local settings = {
   --json array of filetypes to search from directory
   loadfiles_filetypes = [[
     [
-      "jpg", "jpeg", "png", "tif", "tiff", "gif", "webp", "svg", "bmp",
-      "mp3", "wav", "ogm", "flac", "m4a", "wma", "ogg", "opus",
-      "mkv", "avi", "mp4", "ogv", "webm", "rmvb", "flv", "wmv", "mpeg", "mpg", "m4v", "3gp"
+      "mkv", "avi", "mp4", "webm", "rmvb", "flv", "wmv", "mpeg",
     ]
   ]],
 
   --loadfiles at startup if 1 or more items in playlist
   loadfiles_on_start = false,
-
   -- loadfiles from working directory on idle startup
   loadfiles_on_idle_start = false,
+  --always put loaded files after currently playing file
+  loadfiles_always_append = false,
 
   --sort playlist on mpv start
   sortplaylist_on_start = false,
@@ -115,6 +114,9 @@ local settings = {
   --allow the playlist cursor to loop from end to start and vice versa
   loop_cursor = true,
 
+  --youtube-dl executable for title resolving if enabled, probably "youtube-dl" or "yt-dlp", can be absolute path
+  youtube_dl_executable = "yt-dlp",
+
 
   --####  VISUAL SETTINGS
 
@@ -124,11 +126,14 @@ local settings = {
   --call youtube-dl to resolve the titles of urls in the playlist
   resolve_titles = false,
 
+  -- timeout in seconds for title resolving
+  resolve_title_timeout = 15,
+
   --osd timeout on inactivity, with high value on this open_toggles is good to be true
-  playlist_display_timeout = 5,
+  playlist_display_timeout = 4,
 
   --amount of entries to show before slicing. Optimal value depends on font/video size etc.
-  showamount = 16,
+  showamount = 15,
 
   --font size scales by window, if false requires larger font and padding sizes
   scale_playlist_by_window=true,
@@ -140,7 +145,7 @@ local settings = {
   style_ass_tags = "{}",
   --paddings from top left corner
   text_padding_x = 10,
-  text_padding_y = 30,
+  text_padding_y = 10,
 
   --set title of window with stripped name
   set_title_stripped = false,
@@ -148,7 +153,7 @@ local settings = {
   title_suffix = " - mpv",
 
   --slice long filenames, and how many chars to show
-  slice_longfilenames = false,
+  slice_longfilenames = true,
   slice_longfilenames_amount = 70,
 
   --Playlist header template
@@ -157,7 +162,7 @@ local settings = {
   --%cursor = position of navigation
   --%plen = playlist length
   --%N = newline
-  playlist_header = "[%cursor/%plen]",
+  playlist_header = "播放列表 [%cursor/%plen]",
 
   --Playlist file templates
   --%pos = position of file with leading zeros
@@ -166,24 +171,23 @@ local settings = {
   --you can also use the ass tags mentioned above. For example:
   --  selected_file="{\\c&HFF00FF&}➔ %name"   | to add a color for selected file. However, if you
   --  use ass tags you need to reset them for every line (see https://github.com/jonniek/mpv-playlistmanager/issues/20)
-  normal_file = "○ %name",
-  hovered_file = "● %name",
-  selected_file = "➔ %name",
-  playing_file = "▷ %name",
-  playing_hovered_file = "▶ %name",
-  playing_selected_file = "➤ %name",
+  normal_file = "{\c&HFFFFFF&}□ %name",
+  hovered_file = "{\c&H33FFFF&}■ %name",
+  selected_file = "{\c&C1C1FF&}☑ %name",
+  playing_file = "{\c&HAAAAAA&}▷ %name",
+  playing_hovered_file = "{\c&H00FF00&}▶ %name",
+  playing_selected_file = "{\c&C1C1FF&}☑ %name",
 
 
   -- what to show when playlist is truncated
-  playlist_sliced_prefix = "...",
-  playlist_sliced_suffix = "...",
+  playlist_sliced_prefix = "▲",
+  playlist_sliced_suffix = "▼",
 
   --output visual feedback to OSD for tasks
   display_osd_feedback = true,
 
   -- reset cursor navigation when playlist is not visible
   reset_cursor_on_close = true,
-
 }
 local opts = require("mp.options")
 opts.read_options(settings, nil, function(list) update_opts(list) end)
@@ -642,6 +646,7 @@ function get_files_windows(dir)
           $path = "]]..dir..[["
           $escapedPath = [WildcardPattern]::Escape($path)
           cd $escapedPath
+
           $list = (Get-ChildItem -File | Sort-Object { [regex]::Replace($_.Name, '\d+', { $args[0].Value.PadLeft(20) }) }).Name
           $string = ($list -join "/")
           $u8list = [System.Text.Encoding]::UTF8.GetBytes($string)
@@ -716,19 +721,19 @@ function playlist(force_dir)
         appendstr = "append-play"
         hasfile = true
       end
-      if filenames[file] then
-        -- continue
-      elseif cur == true then
+      if filename == file then
+        cur = true
+      elseif filenames[file] then
+        -- skip files already in playlist
+      elseif cur == true or settings.loadfiles_always_append then
         mp.commandv("loadfile", utils.join_path(dir, file), appendstr)
         msg.info("Appended to playlist: " .. file)
         c2 = c2 + 1
-      elseif file ~= filename then
-          mp.commandv("loadfile", utils.join_path(dir, file), appendstr)
-          msg.info("Prepended to playlist: " .. file)
-          mp.commandv("playlist-move", mp.get_property_number("playlist-count", 1)-1,  c)
-          c = c + 1
       else
-        cur = true
+        mp.commandv("loadfile", utils.join_path(dir, file), appendstr)
+        msg.info("Prepended to playlist: " .. file)
+        mp.commandv("playlist-move", mp.get_property_number("playlist-count", 1)-1,  c)
+        c = c + 1
       end
     end
     if c2 > 0 or c>0 then
@@ -822,8 +827,10 @@ function save_playlist(filename)
       if not filename:match("^%a%a+:%/%/") then
         fullpath = utils.join_path(pwd, filename)
       end
-      local title = mp.get_property('playlist/'..i..'/title')
-      if title then file:write("#EXTINF:,"..title.."\n") end
+      local title = mp.get_property('playlist/'..i..'/title') or url_table[filename]
+      if title then
+        file:write("#EXTINF:,"..title.."\n")
+      end
       file:write(fullpath, "\n")
       i=i+1
     end
@@ -1036,7 +1043,7 @@ function resolve_titles()
     then
       requested_urls[filename] = true
 
-      local args = { 'youtube-dl', '--no-playlist', '--flat-playlist', '-sJ', filename }
+      local args = { settings.youtube_dl_executable, '--no-playlist', '--flat-playlist', '-sJ', filename }
       local req = mp.command_native_async(
         {
           name = "subprocess",
@@ -1066,7 +1073,7 @@ function resolve_titles()
             end
           end)
 
-      mp.add_timeout(5, function()
+      mp.add_timeout(settings.resolve_title_timeout, function()
         mp.abort_async_command(req)
       end)
 
@@ -1104,12 +1111,12 @@ end
 
 mp.register_script_message("playlistmanager", handlemessage)
 
-mp.add_key_binding(nil, "sortplaylist", sortplaylist)
-mp.add_key_binding(nil, "shuffleplaylist", shuffleplaylist)
-mp.add_key_binding(nil, "reverseplaylist", reverseplaylist)
-mp.add_key_binding(nil, "loadfiles", playlist)
-mp.add_key_binding(nil, "saveplaylist", activate_playlist_save)
-mp.add_key_binding(nil, "showplaylist", toggle_playlist)
-
 mp.register_event("file-loaded", on_loaded)
 mp.register_event("end-file", on_closed)
+
+mp.add_key_binding(nil,  "loadfiles",        playlist)
+mp.add_key_binding(nil,  "sortplaylist",     sortplaylist)
+mp.add_key_binding(nil,  "saveplaylist",     activate_playlist_save)
+mp.add_key_binding(nil,  "showplaylist",     toggle_playlist)
+mp.add_key_binding(nil,  "shuffleplaylist",  shuffleplaylist)
+mp.add_key_binding(nil,  "reverseplaylist",  reverseplaylist)
