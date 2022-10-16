@@ -195,7 +195,7 @@ local function spawn(time)
         {name = "subprocess", playback_only = true, args = {
             "mpv", path, "--config=no", "--terminal=no", "--msg-level=all=no", "--idle=yes", "--keep-open=always","--pause=yes", "--ao=null", "--vo=null",
             "--load-auto-profiles=no", "--load-osd-console=no", "--load-stats-overlay=no", "--osc=no",
-            "--vd-lavc-skiploopfilter=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..mpv_hwdec,
+            "--vd-lavc-skiploopfilter=all", "--vd-lavc-skipidct=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..mpv_hwdec,
             "--edition="..(mp.get_property_number("edition") or "auto"), "--vid="..(mp.get_property_number("vid") or "auto"), "--sub=no", "--audio=no", "--sub-auto=no", "--audio-file-auto=no",
             "--input-ipc-server="..options.socket,
             "--start="..time,
@@ -204,7 +204,7 @@ local function spawn(time)
             "--sws-scaler=point", "--sws-fast=yes", "--sws-allow-zimg=no",
             "--audio-pitch-correction=no",
             "--vf=".."scale=w="..effective_w..":h="..effective_h..":flags=neighbor,format=bgra",
-            "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--o="..options.tnpath
+            "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--ocopy-metadata=no", "--o="..options.tnpath
         }},
         function() end
     )
