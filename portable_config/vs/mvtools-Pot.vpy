@@ -1,5 +1,6 @@
-##某播放器的内置脚本，开销不低
+### 某播放器的内置脚本，开销不低
 
+import vapoursynth as vs
 from vapoursynth import core
 
 # skip motion interpolation completely for content exceeding the limits below

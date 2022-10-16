@@ -1,5 +1,5 @@
-##Source: https://bbs.vcb-s.com/?14732
-##@Starlight 的个人高参脚本，性能要求较高
+### Source: https://bbs.vcb-s.com/?14732
+### @Starlight 的个人高参脚本，性能要求较高
 
 import vapoursynth as vs
 from vapoursynth import core
@@ -61,10 +61,10 @@ def toYUV420(clip):
     if clip.format.id == vs.YUV420P8:
         clip8 = clip
     elif clip.format.id == vs.YUV420P10:
-        clip8 = clip.resize.Point(format=vs.YUV420P8)
+        clip8 = clip.resize.Bilinear(format=vs.YUV420P8)
     else:
-        clip = clip.resize.Point(format=vs.YUV420P10)
-        clip8 = clip.resize.Point(format=vs.YUV420P8)
+        clip = clip.resize.Bilinear(format=vs.YUV420P10)
+        clip8 = clip.resize.Bilinear(format=vs.YUV420P8)
     return clip, clip8
 
 
