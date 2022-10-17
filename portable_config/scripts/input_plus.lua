@@ -4,32 +4,32 @@
 
 input.conf 示例：
 
-<KEY>              script-binding input_plus/mark_aid_A         # 标记当前音轨为A
-<KEY>              script-binding input_plus/mark_aid_B         # 标记当前音轨为B
-<KEY>              script-binding input_plus/mark_aid_merge     # 合并AB音轨
-<KEY>              script-binding input_plus/mark_aid_reset     # 取消AB并轨和标记
-m                  script-binding input_plus/mark_aid_fin       # （单键实现上述四项命令）
+ #                    script-binding input_plus/mark_aid_A          # 标记当前音轨为A
+ #                    script-binding input_plus/mark_aid_B          # 标记当前音轨为B
+ #                    script-binding input_plus/mark_aid_merge      # 合并AB音轨
+ #                    script-binding input_plus/mark_aid_reset      # 取消AB并轨和标记
+ m                    script-binding input_plus/mark_aid_fin        # （单键实现上述四项命令）
 
-Alt+p              script-binding input_plus/playlist_shuffle   # 播放列表的洗牌与撤销
+ Alt+p                script-binding input_plus/playlist_shuffle    # 播放列表的洗牌与撤销
 
-CLOSE_WIN          script-binding input_plus/quit_real          # 对执行退出命令前的确认（防止误触）
-<KEY>              script-binding input_plus/quit_wait          # 延后退出命令的执行（执行前再次触发可取消）
+ CLOSE_WIN            script-binding input_plus/quit_real           # 对执行退出命令前的确认（防止误触）
+ #                    script-binding input_plus/quit_wait           # 延后退出命令的执行（执行前再次触发可取消）
 
-Alt+LEFT           script-binding input_plus/seek_auto_back     # 后退至上句字幕的时间点或上一关键帧
-<KEY>              script-binding input_plus/seek_auto_next     # 前进至下...
-<KEY>              script-binding input_plus/seek_skip_back     # 向后大跳（精确帧）
-<KEY>              script-binding input_plus/seek_skip_next     # 向前...
+ #                    script-binding input_plus/seek_auto_back      # [可持续触发] 后退至上句字幕的时间点或上一关键帧
+ #                    script-binding input_plus/seek_auto_next      # [可持续触发] 前进至下...
+ #                    script-binding input_plus/seek_skip_back      # 向后大跳（精确帧）
+ #                    script-binding input_plus/seek_skip_next      # 向前...
 
-SPACE              script-binding input_plus/speed_auto         # 按下两倍速，松开一倍速
-<KEY>              script-binding input_plus/speed_auto_bullet  # 按下子弹时间，松开一倍速
-<KEY>              script-binding input_plus/speed_recover      # 仿Pot的速度重置与恢复
+ SPACE                script-binding input_plus/speed_auto          # [按住/松开] 两倍速/一倍速
+ #                    script-binding input_plus/speed_auto_bullet   # [按住/松开] 子弹时间/一倍速
+ #                    script-binding input_plus/speed_recover       # 仿Pot的速度重置与恢复
 
-1                  script-binding input_plus/trackA_back        # 上一个音频轨道（自动跳过无轨道）
-<KEY>              script-binding input_plus/trackA_next        # 下...
-<KEY>              script-binding input_plus/trackS_back        # 上一个字幕轨道...
-<KEY>              script-binding input_plus/trackS_next        # 下...
-<KEY>              script-binding input_plus/trackV_back        # 上一个视频轨道...
-<KEY>              script-binding input_plus/trackV_next        # 下...
+ #                    script-binding input_plus/trackA_back         # 上一个音频轨道（自动跳过无轨道）
+ #                    script-binding input_plus/trackA_next         # 下...
+ #                    script-binding input_plus/trackS_back         # 上一个字幕轨道...
+ #                    script-binding input_plus/trackS_next         # 下...
+ #                    script-binding input_plus/trackV_back         # 上一个视频轨道...
+ #                    script-binding input_plus/trackV_next         # 下...
 
 --]]
 
@@ -139,41 +139,22 @@ function quit_wait()
 	end
 end
 
-function seek_auto_back()
+function seek_auto(num)
 	local current_sid = mp.get_property_number("sid") or 0
 	if current_sid == 0 then
-		mp.command("seek " .. -0.1 .. " keyframes")
+		mp.command("seek " .. 0.1 * num .. " keyframes")
 	else
-		mp.command("sub-seek " .. -1 .. "primary")
+		mp.command("sub-seek " .. num .. " primary")
 	end
 end
-function seek_auto_next()
-	local current_sid = mp.get_property_number("sid") or 0
-	if current_sid == 0 then
-		mp.command("seek " .. 0.1 .. " keyframes")
-	else
-		mp.command("sub-seek " .. 1 .. "primary")
-	end
-end
-function seek_skip_back()
+function seek_skip(num)
 	local duration_div_chapters = mp.get_property_number("duration", 1) / mp.get_property_number("chapter-list/count", 1)
 	if duration_div_chapters >= 240 then
-		mp.command("seek " .. -10 .. " relative-percent+exact")
+		mp.command("seek " .. 10 * num .. " relative-percent+exact")
 	elseif duration_div_chapters == 1 then
-		mp.command("seek " .. -60 .. " exact")
+		mp.command("seek " .. 60 * num .. " exact")
 	else
-		mp.commandv("add", "chapter", -1)
-		mp.command("show-progress")
-	end
-end
-function seek_skip_next()
-	local duration_div_chapters = mp.get_property_number("duration", 1) / mp.get_property_number("chapter-list/count", 1)
-	if duration_div_chapters >= 240 then
-		mp.command("seek " .. 10 .. " relative-percent+exact")
-	elseif duration_div_chapters == 1 then
-		mp.command("seek " .. 60 .. " exact")
-	else
-		mp.commandv("add", "chapter", 1)
+		mp.commandv("add", "chapter", num)
 		mp.command("show-progress")
 	end
 end
@@ -181,19 +162,19 @@ end
 local bak_speed = nil
 function speed_auto(tab)
 	if tab.event == "down" then
-		mp.commandv("set", "speed", 2)
+		mp.set_property_number("speed", 2)
 		mp.msg.verbose("加速播放中")
 	elseif tab.event == "up" then
-		mp.commandv("set", "speed", 1)
+		mp.set_property_number("speed", 1)
 		mp.msg.verbose("已恢复常速")
 	end
 end
 function speed_auto_bullet(tab)
 	if tab.event == "down" then
-		mp.commandv("set", "speed", 0.5)
+		mp.set_property_number("speed", 0.5)
 		mp.msg.verbose("子弹时间中")
 	elseif tab.event == "up" then
-		mp.commandv("set", "speed", 1)
+		mp.set_property_number("speed", 1)
 		mp.msg.verbose("已恢复常速")
 	end
 end
@@ -209,57 +190,12 @@ function speed_recover()
 	end
 end
 
-function trackA_back()
-	mp.command("add aid -1")
-	if mp.get_property_number("aid", 0) == 0 then
-		mp.command("add aid -1")
-		if mp.get_property_number("aid", 0) == 0 then
-			mp.osd_message("无音频轨", 1)
-		end
-	end
-end
-function trackA_next()
-	mp.command("add aid 1")
-	if mp.get_property_number("aid", 0) == 0 then
-		mp.command("add aid 1")
-		if mp.get_property_number("aid", 0) == 0 then
-			mp.osd_message("无音频轨", 1)
-		end
-	end
-end
-function trackS_back()
-	mp.command("add sid -1")
-	if mp.get_property_number("sid", 0) == 0 then
-		mp.command("add sid -1")
-		if mp.get_property_number("sid", 0) == 0 then
-			mp.osd_message("无字幕轨", 1)
-		end
-	end
-end
-function trackS_next()
-	mp.command("add sid 1")
-	if mp.get_property_number("sid", 0) == 0 then
-		mp.command("add sid 1")
-		if mp.get_property_number("sid", 0) == 0 then
-			mp.osd_message("无字幕轨", 1)
-		end
-	end
-end
-function trackV_back()
-	mp.command("add vid -1")
-	if mp.get_property_number("vid", 0) == 0 then
-		mp.command("add vid -1")
-		if mp.get_property_number("vid", 0) == 0 then
-			mp.osd_message("无视频轨", 1)
-		end
-	end
-end
-function trackV_next()
-	mp.command("add vid 1")
-	if mp.get_property_number("vid", 0) == 0 then
-		mp.command("add vid 1")
-		if mp.get_property_number("vid", 0) == 0 then
-			mp.osd_message("无视频轨", 1)
+function track_seek(id, num)
+	mp.command("add " .. id .. " " .. num)
+	if mp.get_property_number(id, 0) == 0 then
+		mp.command("add " .. id .. " " .. num)
+		if mp.get_property_number(id, 0) == 0 then
+			mp.osd_message("无可用轨道", 1)
 		end
 	end
 end
@@ -283,18 +219,18 @@ mp.add_key_binding(nil, "playlist_shuffle", playlist_shuffle)
 mp.add_key_binding(nil, "quit_real", quit_real)
 mp.add_key_binding(nil, "quit_wait", quit_wait)
 
-mp.add_key_binding(nil, "seek_auto_back", seek_auto_back, {repeatable = true})
-mp.add_key_binding(nil, "seek_auto_next", seek_auto_next, {repeatable = true})
-mp.add_key_binding(nil, "seek_skip_back", seek_skip_back)
-mp.add_key_binding(nil, "seek_skip_next", seek_skip_next)
+mp.add_key_binding(nil, "seek_auto_back", function() seek_auto(-1) end, {repeatable = true})
+mp.add_key_binding(nil, "seek_auto_next", function() seek_auto(1) end, {repeatable = true})
+mp.add_key_binding(nil, "seek_skip_back", function() seek_skip(-1) end)
+mp.add_key_binding(nil, "seek_skip_next", function() seek_skip(1) end)
 
 mp.add_key_binding(nil, "speed_auto", speed_auto, {complex = true})
 mp.add_key_binding(nil, "speed_auto_bullet", speed_auto_bullet, {complex = true})
 mp.add_key_binding(nil, "speed_recover", speed_recover)
 
-mp.add_key_binding(nil, "trackA_back", trackA_back)
-mp.add_key_binding(nil, "trackA_next", trackA_next)
-mp.add_key_binding(nil, "trackS_back", trackS_back)
-mp.add_key_binding(nil, "trackS_next", trackS_next)
-mp.add_key_binding(nil, "trackV_back", trackV_back)
-mp.add_key_binding(nil, "trackV_next", trackV_next)
+mp.add_key_binding(nil, "trackA_back", function() track_seek("aid", -1) end)
+mp.add_key_binding(nil, "trackA_next", function() track_seek("aid", 1) end)
+mp.add_key_binding(nil, "trackS_back", function() track_seek("sid", -1) end)
+mp.add_key_binding(nil, "trackS_next", function() track_seek("sid", 1) end)
+mp.add_key_binding(nil, "trackV_back", function() track_seek("vid", -1) end)
+mp.add_key_binding(nil, "trackV_next", function() track_seek("vid", 1) end)
