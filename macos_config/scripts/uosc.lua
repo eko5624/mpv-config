@@ -1,6 +1,6 @@
 --[[
-SOURCE_ https://github.com/tomasklaen/uosc/commit/2fb5ff69a81e12f565f603cc0f29983235fce2ff
-
+SOURCE_ https://github.com/tomasklaen/uosc/blob/main/scripts/uosc.lua
+COMMIT_ 2fb5ff69a81e12f565f603cc0f29983235fce2ff
 极简主义设计驱动的多功能界面脚本，兼容 thumbfast 新缩略图引擎
 ]]--
 
@@ -266,7 +266,7 @@ local function create_default_menu()
 			{title = '※ 字幕轨列表', value = 'script-binding uosc/subtitles'},
 			{title = '播放列表乱序重排', value = 'playlist-shuffle'},
 		},},
-		{title = '截屏 当前画面', value = 'screenshot window'},
+		{title = '※ 截屏', value = 'script-binding uosc/shot'},
 		{title = '视频', items = {
 			{title = '切换 解码模式', value = 'cycle-values hwdec no auto auto-copy'},
 			{title = '切换 去色带状态', value = 'cycle deband'},
@@ -1568,11 +1568,9 @@ local data = {
 		{title = 'Submenu', items = {...}}
 	}
 }
-
 function open_item(value)
 	-- do something with value
 end
-
 local menu = Menu:open(items, open_item)
 menu.update(new_data)
 menu.update_items(new_items)
@@ -4770,6 +4768,32 @@ mp.add_key_binding(nil, 'open-config-directory', function()
 		utils.subprocess_detached({args = args, cancellable = false})
 	else
 		msg.error('Couldn\'t serialize config path "' .. config_path .. '".')
+	end
+end)
+-- 特殊截屏
+mp.add_key_binding(nil, 'shot', function()
+	if Menu:is_open() then
+		local bak_opt1, bak_opt2, bak_opt3, bak_opt4 = options.curtain_opacity, options.menu_opacity, options.menu_parent_opacity, options.pause_indicator
+		options.curtain_opacity, options.menu_opacity, options.menu_parent_opacity = 0, 0, 0
+
+		local paused = mp.get_property_bool('pause')
+		if paused then
+			mp.add_timeout(200 / 1000, function()
+				mp.command('screenshot window')
+				options.curtain_opacity, options.menu_opacity, options.menu_parent_opacity = bak_opt1, bak_opt2, bak_opt3
+			end)
+		else
+			options.pause_indicator = 'manual'
+			mp.set_property_bool('pause', true)
+			mp.add_timeout(200 / 1000, function()
+				mp.command('screenshot window')
+				mp.set_property_bool('pause', false)
+				options.pause_indicator = bak_opt4
+				options.curtain_opacity, options.menu_opacity, options.menu_parent_opacity = bak_opt1, bak_opt2, bak_opt3
+			end)
+		end
+	else
+		mp.command('screenshot window')
 	end
 end)
 
