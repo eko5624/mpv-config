@@ -1,11 +1,3 @@
---[[
-SOURCE_ https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua
-COMMIT_20210624_ee27629
-
-自动加载当前目录的所有文件到播放列表
-根据mpv的机制，切换目录会清空当前列表
---]]
-
 -- This script automatically loads playlist entries before and after the
 -- the currently played file. It does so by scanning the directory a file is
 -- located in when starting playback. It sorts the directory entries
@@ -17,18 +9,15 @@ COMMIT_20210624_ee27629
 --[[
 To configure this script use file autoload.conf in directory script-opts (the "script-opts"
 directory must be in the mpv configuration directory, typically ~/.config/mpv/).
-
 Example configuration would be:
-
 disabled=no
 images=no
 videos=yes
 audio=yes
-sameseries=yes
 ignore_hidden=yes
-
 --]]
 
+MAXENTRIES = 5000
 
 local msg = require 'mp.msg'
 local options = require 'mp.options'
@@ -39,8 +28,6 @@ o = {
     images = true,
     videos = true,
     audio = true,
-    sameseries = false,
-    max_entries = 5000,
     ignore_hidden = true
 }
 options.read_options(o)
@@ -59,17 +46,17 @@ function SetUnion (a,b)
 end
 
 EXTENSIONS_VIDEO = Set {
-    '3g2', '3gp', 'avi', 'asf', 'f4v', 'flv', 'iso', 'm2ts', 'm4v', 'mj2', 'mkv', 'mov',
-    'mp4', 'mpeg', 'mpg', 'ogv', 'rm', 'rmvb', 'ts', 'vob', 'webm', 'wmv', 'y4m'
+    '3g2', '3gp', 'avi', 'flv', 'm2ts', 'm4v', 'mj2', 'mkv', 'mov',
+    'mp4', 'mpeg', 'mpg', 'ogv', 'rmvb', 'webm', 'wmv', 'y4m'
 }
 
 EXTENSIONS_AUDIO = Set {
-    'aiff', 'ape', 'au', 'dsf', 'flac', 'm4a', 'mka', 'mp3', 'oga', 'ogg',
-    'ogm', 'opus', 'spx', 'wav', 'wma'
+    'aiff', 'ape', 'au', 'flac', 'm4a', 'mka', 'mp3', 'oga', 'ogg',
+    'ogm', 'opus', 'wav', 'wma'
 }
 
 EXTENSIONS_IMAGES = Set {
-    'avif', 'bmp', 'gif', 'j2k', 'jfif', 'jp2', 'jpeg', 'jpg', 'jxl', 'png',
+    'avif', 'bmp', 'gif', 'j2k', 'jp2', 'jpeg', 'jpg', 'jxl', 'png',
     'svg', 'tga', 'tif', 'tiff', 'webp'
 }
 
@@ -179,18 +166,6 @@ function find_and_add_entries()
         if ext == nil then
             return false
         end
-        if o.sameseries then
-            local name = mp.get_property("filename")
-            local namepre = string.sub(name, 1, 6)
-            local namepre0 = string.gsub(namepre, "%p", "%%%1")
-            for vidext, _ in pairs(EXTENSIONS_VIDEO) do
-                if string.match(name, vidext.."$") ~= nil then
-                    if string.match(v, "^"..namepre0) == nil then
-                    return false
-                    end
-                end
-            end
-        end
         return EXTENSIONS[string.lower(ext)]
     end)
     table.sort(files, alnumcomp)
@@ -214,7 +189,7 @@ function find_and_add_entries()
 
     local append = {[-1] = {}, [1] = {}}
     for direction = -1, 1, 2 do -- 2 iterations, with direction = -1 and +1
-        for i = 1, o.max_entries do
+        for i = 1, MAXENTRIES do
             local file = files[current + i * direction]
             local pl_e = pl[pl_current + i * direction]
             if file == nil or file[1] == "." then
