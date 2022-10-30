@@ -1,43 +1,36 @@
--- thumbfast.lua
---
--- High-performance on-the-fly thumbnailer
---
--- Built for easy integration in third-party UIs.
+--[[
+SOURCE_ https://github.com/po5/thumbfast/blob/master/thumbfast.lua
+COMMIT_ 712aefaaedd5fc9f791146c69f8a774d6621c55e
+
+适配多个OSC类脚本的新缩略图引擎
+]]--
 
 local options = {
-    -- Socket path (leave empty for auto)
-    socket = "",
 
-    -- Thumbnail path (leave empty for auto)
-    thumbnail = "",
+    socket = "",           -- Socket path (leave empty for auto)
+    tnpath = "",           -- 缩略图缓存路径（确保目录真实存在），留空即自动
 
-    -- Maximum thumbnail size in pixels (scaled down to fit)
-    -- Values are scaled when hidpi is enabled
-    max_height = 200,
-    max_width = 200,
+    max_height = 300,      -- Maximum thumbnail size in pixels (scaled down to fit) Values are scaled when hidpi is enabled
+    max_width = 300,
 
-    -- Overlay id
-    overlay_id = 42,
+    overlay_id = 42,       -- Overlay id
 
-    -- Spawn thumbnailer on file load for faster initial thumbnails
-    spawn_first = false,
+    spawn_first = false,   -- Spawn thumbnailer on file load for faster initial thumbnails
+    network = false,       -- Enable on network playback
+    audio = false,         -- Enable on audio playback
 
-    -- Enable on network playback
-    network = false,
+    use_lua_io = true,     -- Windows only: don't use subprocess to communicate with socket (warning: blocks, might cause hangs)
 
-    -- Enable on audio playback
-    audio = false,
+    min_duration = 0,      -- 对短视频关闭预览（秒）
+    precise = "auto",      -- 预览精度
+    hwdec = true,          -- 启用硬解加速
+    frequency = 0.1,       -- 解码频率（秒）
 
-    -- Enable hardware decoding
-    hwdec = false,
-
-    -- Windows only: don't use subprocess to communicate with socket
-    use_lua_io = false
 }
 
 mp.utils = require "mp.utils"
 mp.options = require "mp.options"
-mp.options.read_options(options, "thumbfast")
+mp.options.read_options(options)
 
 local winapi = {}
 if options.use_lua_io then
@@ -94,19 +87,6 @@ local script_name = nil
 
 local show_thumbnail = false
 
-local filters_reset = {["lavfi-crop"]=true, crop=true}
-local filters_runtime = {hflip=true, vflip=true}
-local filters_all = filters_runtime
-for k,v in pairs(filters_reset) do filters_all[k] = v end
-
-local last_vf_reset = ""
-local last_vf_runtime = ""
-
-local last_rotate = 0
-
-local par = ""
-local last_par = ""
-
 local file_timer = nil
 local file_check_period = 1/60
 local first_file = false
@@ -140,6 +120,7 @@ local function get_os()
 
     local os_patterns = {
         ["windows"] = "Windows",
+
         ["linux"]   = "Linux",
 
         ["osx"]     = "Mac",
@@ -176,49 +157,23 @@ if options.socket == "" then
     end
 end
 
-if options.thumbnail == "" then
+if options.tnpath == "" then
     if os_name == "Windows" then
-        options.thumbnail = os.getenv("TEMP").."\\thumbfast.out"
+        options.tnpath = os.getenv("TEMP").."\\thumbfast.out"
     else
-        options.thumbnail = "/tmp/thumbfast.out"
+        options.tnpath = "/tmp/thumbfast.out"
     end
 end
 
 local unique = mp.get_property_native("pid")
 
 options.socket = options.socket .. unique
-options.thumbnail = options.thumbnail .. unique
+options.tnpath = options.tnpath .. unique
 
 local mpv_path = "mpv"
 
 if os_name == "Mac" and unique then
     mpv_path = string.gsub(mp.command_native({name = "subprocess", playback_only = false, capture_stdout = true, args = {"ps", "-o", "comm=", "-p", tostring(unique)}}).stdout, "[\n\r]", "")
-end
-
-local function vf_string(filters, full)
-    local vf = ""
-    local vf_table = mp.get_property_native("vf")
-
-    if #vf_table > 0 then
-        for i = #vf_table, 1, -1 do
-            if filters[vf_table[i].name] then
-                local args = ""
-                for key, value in pairs(vf_table[i].params) do
-                    if args ~= "" then
-                        args = args .. ":"
-                    end
-                    args = args .. key .. "=" .. value
-                end
-                vf = vf .. vf_table[i].name .. "=" .. args .. ","
-            end
-        end
-    end
-
-    if full then
-        vf = vf.."scale=w="..effective_w..":h="..effective_h..par..",pad=w="..effective_w..":h="..effective_h..":x=-1:y=-1,format=bgra"
-    end
-
-    return vf
 end
 
 local function calc_dimensions()
@@ -235,28 +190,18 @@ local function calc_dimensions()
         effective_h = math.floor(options.max_height * scale + 0.5)
         effective_w = math.floor(width / height * effective_h + 0.5)
     end
-
-    local v_par = mp.get_property_number("video-out-params/par", 1)
-    if v_par == 1 then
-        par = ":force_original_aspect_ratio=decrease"
-    else
-        par = ""
-    end
 end
 
 local function info(w, h)
     local display_w, display_h = w, h
-    if mp.get_property_number("video-params/rotate", 0) % 180 == 90 then
-        display_w, display_h = h, w
-    end
 
-    local json, err = mp.utils.format_json({width=display_w, height=display_h, disabled=disabled, socket=options.socket, thumbnail=options.thumbnail, overlay_id=options.overlay_id})
+    local json, err = mp.utils.format_json({width=display_w, height=display_h, disabled=disabled, socket=options.socket, tnpath=options.tnpath, overlay_id=options.overlay_id})
     mp.commandv("script-message", "thumbfast-info", json)
 end
 
 local function remove_thumbnail_files()
-    os.remove(options.thumbnail)
-    os.remove(options.thumbnail..".bgra")
+    os.remove(options.tnpath)
+    os.remove(options.tnpath..".bgra")
 end
 
 local function spawn(time)
@@ -274,15 +219,18 @@ local function spawn(time)
     remove_thumbnail_files()
 
     local args = {
-        mpv_path, path, "--no-config", "--msg-level=all=no", "--idle", "--pause", "--keep-open=always", "--really-quiet", "--no-terminal",
-        "--edition="..(mp.get_property_number("edition") or "auto"), "--vid="..(mp.get_property_number("vid") or "auto"), "--no-sub", "--no-audio",
-        "--start="..time, "--hr-seek=no",
+        mpv_path, path, "--config=no", "--terminal=no", "--msg-level=all=no", "--idle=yes", "--keep-open=always","--pause=yes", "--ao=null", "--vo=null",
+        "--load-auto-profiles=no", "--load-osd-console=no", "--load-stats-overlay=no", "--osc=no",
+        "--vd-lavc-skiploopfilter=all", "--vd-lavc-skipidct=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..(options.hwdec and "auto" or "no"),
+        "--edition="..(mp.get_property_number("edition") or "auto"), "--vid="..(mp.get_property_number("vid") or "auto"), "--sub=no", "--audio=no", "--sub-auto=no", "--audio-file-auto=no",
+        "--input-ipc-server="..options.socket,
+        "--start="..time,
         "--ytdl-format=worst", "--demuxer-readahead-secs=0", "--demuxer-max-bytes=128KiB",
-        "--vd-lavc-skiploopfilter=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..(options.hwdec and "auto" or "no"),
-        "--vf="..vf_string(filters_all, true),
-        "--sws-allow-zimg=no", "--sws-fast=yes", "--sws-scaler=fast-bilinear",
-        "--video-rotate="..last_rotate,
-        "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--o="..options.thumbnail
+        "--gpu-dumb-mode=yes", "--tone-mapping=clip", "--hdr-compute-peak=no",
+        "--sws-scaler=point", "--sws-fast=yes", "--sws-allow-zimg=no",
+        "--audio-pitch-correction=no",
+        "--vf=".."scale=w="..effective_w..":h="..effective_h..":flags=neighbor,format=bgra",
+        "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--ocopy-metadata=no", "--o="..options.tnpath
     }
 
     if os_name == "Windows" then
@@ -345,16 +293,13 @@ end
 local function draw(w, h, script)
     if not w or not show_thumbnail then return end
     local display_w, display_h = w, h
-    if mp.get_property_number("video-params/rotate", 0) % 180 == 90 then
-        display_w, display_h = h, w
-    end
 
     if x ~= nil then
         mp.command_native(
-            {name = "overlay-add", id=options.overlay_id, x=x, y=y, file=options.thumbnail..".bgra", offset=0, fmt="bgra", w=display_w, h=display_h, stride=(4*display_w)}
+            {name = "overlay-add", id=options.overlay_id, x=x, y=y, file=options.tnpath..".bgra", offset=0, fmt="bgra", w=display_w, h=display_h, stride=(4*display_w)}
         )
     elseif script then
-        local json, err = mp.utils.format_json({width=display_w, height=display_h, x=x, y=y, socket=options.socket, thumbnail=options.thumbnail, overlay_id=options.overlay_id})
+        local json, err = mp.utils.format_json({width=display_w, height=display_h, x=x, y=y, socket=options.socket, tnpath=options.tnpath, overlay_id=options.overlay_id})
         mp.commandv("script-message-to", script, "thumbfast-render", json)
     end
 end
@@ -393,11 +338,15 @@ end
 
 local function seek(fast)
     if last_seek_time then
-        run("async seek " .. last_seek_time .. (fast and " absolute+keyframes" or " absolute+exact"))
+        if options.precise == true then run("async seek " .. last_seek_time .. " absolute+exact")
+        elseif options.precise == false then run("async seek " .. last_seek_time .. " absolute+keyframes")
+        elseif options.precise == "auto" then
+            run("async seek " .. last_seek_time .. (fast and " absolute+keyframes" or " absolute+exact"))
+        end
     end
 end
 
-local seek_period = 3/60
+local seek_period = options.frequency
 local seek_period_counter = 0
 local seek_timer
 seek_timer = mp.add_periodic_timer(seek_period, function()
@@ -428,8 +377,8 @@ local function check_new_thumb()
     -- validity but before actually moving the file, so move to a temporary
     -- location before validity check to make sure everything stays consistant
     -- and valid thumbnails don't get overwritten by invalid ones
-    local tmp = options.thumbnail..".tmp"
-    move_file(options.thumbnail, tmp)
+    local tmp = options.tnpath..".tmp"
+    move_file(options.tnpath, tmp)
     local finfo = mp.utils.file_info(tmp)
     if not finfo then return false end
     if first_file then
@@ -438,7 +387,7 @@ local function check_new_thumb()
     end
     local w, h = real_res(effective_w, effective_h, finfo.size)
     if w then -- only accept valid thumbnails
-        move_file(tmp, options.thumbnail..".bgra")
+        move_file(tmp, options.tnpath..".bgra")
 
         real_w, real_h = w, h
         if real_w then info(real_w, real_h) end
@@ -500,39 +449,20 @@ local function watch_changes()
 
     calc_dimensions()
 
-    local vf_reset = vf_string(filters_reset)
-    local rotate = mp.get_property_number("video-rotate", 0)
-
     if spawned then
-        if old_w ~= effective_w or old_h ~= effective_h or last_vf_reset ~= vf_reset or (last_rotate % 180) ~= (rotate % 180) or par ~= last_par then
-            last_rotate = rotate
+        if old_w ~= effective_w or old_h ~= effective_h then
             -- mpv doesn't allow us to change output size
             run("quit")
             clear()
             info(effective_w, effective_h)
             spawned = false
             spawn(last_seek_time or mp.get_property_number("time-pos", 0))
-        else
-            if rotate ~= last_rotate then
-                run("set video-rotate "..rotate)
-            end
-            local vf_runtime = vf_string(filters_runtime)
-            if vf_runtime ~= last_vf_runtime then
-                run("vf set "..vf_string(filters_all, true))
-                last_vf_runtime = vf_runtime
-            end
         end
     else
-        if old_w ~= effective_w or old_h ~= effective_h or last_vf_reset ~= vf_reset or (last_rotate % 180) ~= (rotate % 180) or par ~= last_par then
-            last_rotate = rotate
+        if old_w ~= effective_w or old_h ~= effective_h then
             info(effective_w, effective_h)
         end
-        last_vf_runtime = vf_string(filters_runtime)
     end
-
-    last_vf_reset = vf_reset
-    last_rotate = rotate
-    last_par = par
 end
 
 local function sync_changes(prop, val)
@@ -549,8 +479,9 @@ local function file_load()
     network = mp.get_property_bool("demuxer-via-network", false)
     local image = mp.get_property_native("current-tracks/video/image", true)
     local albumart = image and mp.get_property_native("current-tracks/video/albumart", false)
+    local short_video = mp.get_property_native("duration", 0) <= options.min_duration
 
-    disabled = (network and not options.network) or (albumart and not options.audio) or (image and not albumart)
+    disabled = (network and not options.network) or (albumart and not options.audio) or (image and not albumart) or (short_video and options.min_duration > 0)
     calc_dimensions()
     info(effective_w, effective_h)
     if disabled then return end
@@ -573,7 +504,6 @@ end
 
 mp.observe_property("display-hidpi-scale", "native", watch_changes)
 mp.observe_property("video-out-params", "native", watch_changes)
-mp.observe_property("vf", "native", watch_changes)
 mp.observe_property("vid", "native", sync_changes)
 mp.observe_property("edition", "native", sync_changes)
 
