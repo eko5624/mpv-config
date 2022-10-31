@@ -1,4 +1,6 @@
 @echo off
+chcp 936
+
 setlocal enableextensions enabledelayedexpansion
 path %SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\
 
@@ -18,11 +20,11 @@ set mpv_args=
 :: Get mpv.exe location
 cd /D %~dp0\..
 set mpv_path=%cd%\mpv.exe
-if not exist "%mpv_path%" call :die "mpv.exe not found"
+if not exist "%mpv_path%" call :die "mpv.exe 不在上级目录中"
 
 :: Get mpv-icon.ico location
 set icon_path=%~dp0mpv-icon.ico
-if not exist "%icon_path%" call :die "mpv-icon.ico not found"
+if not exist "%icon_path%" call :die "mpv-icon.ico 不在当前目录中"
 
 :: Register mpv.exe under the "App Paths" key, so it can be found by
 :: ShellExecute, the run command, the start menu, etc.
@@ -178,11 +180,11 @@ call :reg add "HKLM\SOFTWARE\RegisteredApplications" /v "mpv" /d "SOFTWARE\Clien
 powershell "$s=(New-Object -COM WScript.Shell).CreateShortcut('%ProgramData%\Microsoft\Windows\Start Menu\Programs\mpv.lnk');$s.TargetPath='%mpv_path%';$s.Save()"
 
 echo.
-echo Installed successfully^^! You can now configure mpv's file associations in the
-echo Default Programs control panel.
+echo 注册成功！
+echo 现在可以手动在控制面板中选取 mpv 为默认的 “视频播放器”
 echo.
 if [%unattended%] == [yes] exit 0
-<nul set /p =Press any key to open the Default Programs control panel . . .
+<nul set /p =按下任意键转到 “系统设置-默认应用” 设置面板 . . .
 pause >nul
 control /name Microsoft.DefaultPrograms
 exit 0
@@ -199,8 +201,8 @@ exit 0
 	:: https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights
 	openfiles >nul 2>&1
 	if errorlevel 1 (
-		echo This batch script requires administrator privileges. Right-click on
-		echo mpv-install.bat and select "Run as administrator".
+		echo 该批处理脚本须要管理员权限
+		echo 选中 “mpv-install.bat” 右键 “以管理员身份运行” 重新操作
 		call :die
 	)
 	goto :EOF
@@ -290,7 +292,7 @@ exit 0
 	set friendly_name=%~3
 	set extension=%~4
 
-	echo Adding "%extension%" file type
+	echo 关联文件格式 "%extension%"
 
 	:: Add ProgId
 	set prog_id=io.mpv%extension%

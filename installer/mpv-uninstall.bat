@@ -1,4 +1,6 @@
 @echo off
+chcp 936
+
 setlocal enableextensions enabledelayedexpansion
 path %SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem
 
@@ -58,7 +60,7 @@ for /f "usebackq eol= delims=" %%k in (`reg query "%classes_root_key%" /f "io.mp
 :: Delete start menu link
 del "%ProgramData%\Microsoft\Windows\Start Menu\Programs\mpv.lnk"
 
-echo Uninstalled successfully
+echo 反注册成功！
 if [%unattended%] == [yes] exit 0
 pause
 exit 0
@@ -75,8 +77,8 @@ exit 0
 	:: https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights
 	openfiles >nul 2>&1
 	if errorlevel 1 (
-		echo This batch script requires administrator privileges. Right-click on
-		echo mpv-uninstall.bat and select "Run as administrator".
+		echo 该批处理脚本须要管理员权限
+		echo 选中 “mpv-uninstall.bat” 右键 “以管理员身份运行” 重新操作
 		call :die
 	)
 	goto :EOF
