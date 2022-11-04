@@ -1,5 +1,6 @@
 --[[
-SOURCE_ https://github.com/po5/thumbfast/commit/eb21b2e871144a328f93c4597cc1932b43783e6a
+SOURCE_ https://github.com/po5/thumbfast/blob/master/thumbfast.lua
+COMMIT_ 38dc494c68534cefff0cf6a207004dc9d609c87c
 
 适配多个OSC类脚本的新缩略图引擎
 ]]--
@@ -11,18 +12,18 @@ local options = {
 
     max_height = 300,      -- Maximum thumbnail size in pixels (scaled down to fit) Values are scaled when hidpi is enabled
     max_width = 300,
-    max_thumbs = 1440,     -- 最大缩略图数量
 
     overlay_id = 42,       -- Overlay id
 
     spawn_first = false,   -- Spawn thumbnailer on file load for faster initial thumbnails
     network = false,       -- Enable on network playback
     audio = false,         -- Enable on audio playback
+    hwdec = true,          -- 启用硬解加速
+    direct_io = true,      -- Windows only: use native Windows API to write to pipe (requires LuaJIT)
 
     min_duration = 0,      -- 对短视频关闭预览（秒）
-    precise = true,        -- 启用高精度的预览
-    hwdec = true,          -- 启用硬解加速
-    frequency = 0.2,       -- 解码频率（秒）
+    precise = "auto",      -- 预览精度
+    frequency = 0.1,       -- 解码频率（秒）
 
 }
 
@@ -30,16 +31,72 @@ mp.utils = require "mp.utils"
 mp.options = require "mp.options"
 mp.options.read_options(options)
 
-local os_name = ""
+function subprocess(args, async, callback)
+    callback = callback or function() end
 
-math.randomseed(os.time())
-local unique = math.random(10000000)
-local init = false
+    if async then
+        return mp.command_native_async({name = "subprocess", playback_only = true, args = args}, callback)
+    else
+        return mp.command_native({name = "subprocess", playback_only = false, capture_stdout = true, args = args})
+    end
+end
+
+local winapi = {}
+if options.direct_io then
+    local ffi_loaded, ffi = pcall(require, "ffi")
+    if ffi_loaded then
+        winapi = {
+            ffi = ffi,
+            C = ffi.C,
+            bit = require("bit"),
+            socket_wc = "",
+
+            -- WinAPI constants
+            CP_UTF8 = 65001,
+            GENERIC_WRITE = 0x40000000,
+            OPEN_EXISTING = 3,
+            FILE_FLAG_WRITE_THROUGH = 0x80000000,
+            FILE_FLAG_NO_BUFFERING = 0x20000000,
+            PIPE_NOWAIT = ffi.new("unsigned long[1]", 0x00000001),
+
+            INVALID_HANDLE_VALUE = ffi.cast("void*", -1),
+
+            -- don't care about how many bytes WriteFile wrote, so allocate something to store the result once
+            _lpNumberOfBytesWritten = ffi.new("unsigned long[1]"),
+        }
+        -- cache flags used in run() to avoid bor() call
+        winapi._createfile_pipe_flags = winapi.bit.bor(winapi.FILE_FLAG_WRITE_THROUGH, winapi.FILE_FLAG_NO_BUFFERING)
+
+        ffi.cdef[[
+            void* __stdcall CreateFileW(const wchar_t *lpFileName, unsigned long dwDesiredAccess, unsigned long dwShareMode, void *lpSecurityAttributes, unsigned long dwCreationDisposition, unsigned long dwFlagsAndAttributes, void *hTemplateFile);
+            bool __stdcall WriteFile(void *hFile, const void *lpBuffer, unsigned long nNumberOfBytesToWrite, unsigned long *lpNumberOfBytesWritten, void *lpOverlapped);
+            bool __stdcall CloseHandle(void *hObject);
+            bool __stdcall SetNamedPipeHandleState(void *hNamedPipe, unsigned long *lpMode, unsigned long *lpMaxCollectionCount, unsigned long *lpCollectDataTimeout);
+            int __stdcall MultiByteToWideChar(unsigned int CodePage, unsigned long dwFlags, const char *lpMultiByteStr, int cbMultiByte, wchar_t *lpWideCharStr, int cchWideChar);
+        ]]
+
+        winapi.MultiByteToWideChar = function(MultiByteStr)
+            if MultiByteStr then
+                local utf16_len = winapi.C.MultiByteToWideChar(winapi.CP_UTF8, 0, MultiByteStr, -1, nil, 0)
+                if utf16_len > 0 then
+                    local utf16_str = winapi.ffi.new("wchar_t[?]", utf16_len)
+                    if winapi.C.MultiByteToWideChar(winapi.CP_UTF8, 0, MultiByteStr, -1, utf16_str, utf16_len) > 0 then
+                        return utf16_str
+                    end
+                end
+            end
+            return ""
+        end
+
+    else
+        options.direct_io = false
+    end
+end
 
 local spawned = false
 local network = false
 local disabled = false
-local interval = 0
+local spawn_waiting = false
 
 local x = nil
 local y = nil
@@ -52,17 +109,46 @@ local effective_w = options.max_width
 local effective_h = options.max_height
 local real_w = nil
 local real_h = nil
+local last_real_w = nil
+local last_real_h = nil
 
 local script_name = nil
 
 local show_thumbnail = false
 
+local last_has_vid = 0
+local has_vid = 0
+
 local file_timer = nil
 local file_check_period = 1/60
 local first_file = false
 
-local seek_flag = "absolute"
-if options.precise then seek_flag = seek_flag.."+exact" else seek_flag = seek_flag.."+keyframes" end
+local function debounce(func, wait)
+    func = type(func) == "function" and func or function() end
+    wait = type(wait) == "number" and wait / 1000 or 0
+
+    local timer = nil
+    local timer_end = function ()
+        timer:kill()
+        timer = nil
+        func()
+    end
+
+    return function ()
+        if timer then
+            timer:kill()
+        end
+        timer = mp.add_timeout(wait, timer_end)
+    end
+end
+
+local client_script = [=[
+#!/bin/bash
+MPV_IPC_FD=0; MPV_IPC_PATH="%s"
+trap "kill 0" EXIT
+while [[ $# -ne 0 ]]; do case $1 in --mpv-ipc-fd=*) MPV_IPC_FD=${1/--mpv-ipc-fd=/} ;; esac; shift; done
+if echo "print-text thumbfast" >&"$MPV_IPC_FD"; then echo -n > "$MPV_IPC_PATH"; tail -f "$MPV_IPC_PATH" >&"$MPV_IPC_FD" & while read -r -u "$MPV_IPC_FD"; do :; done; fi
+]=]
 
 local function get_os()
     local raw_os_name = ""
@@ -77,7 +163,7 @@ local function get_os()
                 raw_os_name = env_OS
             end
         else
-            raw_os_name = mp.command_native({name = "subprocess", playback_only = false, capture_stdout = true, args = {"uname", "-s"}}).stdout
+            raw_os_name = subprocess({"uname", "-s"}).stdout
         end
     end
 
@@ -86,7 +172,6 @@ local function get_os()
     local os_patterns = {
         ["windows"] = "Windows",
 
-        -- Uses socat
         ["linux"]   = "Linux",
 
         ["osx"]     = "Mac",
@@ -96,7 +181,6 @@ local function get_os()
         ["^mingw"]  = "Windows",
         ["^cygwin"] = "Windows",
 
-        -- Because they have the good netcat (with -U)
         ["bsd$"]    = "Mac",
         ["sunos"]   = "Mac"
     }
@@ -112,6 +196,46 @@ local function get_os()
     end
 
     return str_os_name
+end
+
+local os_name = get_os()
+
+if options.socket == "" then
+    if os_name == "Windows" then
+        options.socket = "thumbfast"
+    else
+        options.socket = "/tmp/thumbfast"
+    end
+end
+
+if options.tnpath == "" then
+    if os_name == "Windows" then
+        options.tnpath = os.getenv("TEMP").."\\thumbfast.out"
+    else
+        options.tnpath = "/tmp/thumbfast.out"
+    end
+end
+
+local unique = mp.utils.getpid()
+
+options.socket = options.socket .. unique
+options.tnpath = options.tnpath .. unique
+
+if options.direct_io then
+    if os_name == "Windows" then
+        winapi.socket_wc = winapi.MultiByteToWideChar("\\\\.\\pipe\\" .. options.socket)
+    end
+
+    if winapi.socket_wc == "" then
+        options.direct_io = false
+    end
+end
+
+local mpv_path = "mpv"
+
+if os_name == "Mac" and unique then
+    mpv_path = string.gsub(subprocess({"ps", "-o", "comm=", "-p", tostring(unique)}).stdout, "[\n\r]", "")
+    mpv_path = string.gsub(mpv_path, "/mpv%-bundle$", "/mpv")
 end
 
 local function calc_dimensions()
@@ -133,6 +257,17 @@ end
 local function info(w, h)
     local display_w, display_h = w, h
 
+    network = mp.get_property_bool("demuxer-via-network", false)
+    local image = mp.get_property_native("current-tracks/video/image", true)
+    local albumart = image and mp.get_property_native("current-tracks/video/albumart", false)
+    local short_video = mp.get_property_native("duration", 0) <= options.min_duration
+    disabled = not (w and h) or
+        has_vid == 0 or
+        (network and not options.network) or
+        (albumart and not options.audio) or
+        (image and not albumart) or
+        (short_video and options.min_duration > 0)
+
     local json, err = mp.utils.format_json({width=display_w, height=display_h, disabled=disabled, socket=options.socket, tnpath=options.tnpath, overlay_id=options.overlay_id})
     mp.commandv("script-message", "thumbfast-info", json)
 end
@@ -148,99 +283,85 @@ local function spawn(time)
     local path = mp.get_property("path")
     if path == nil then return end
 
-    spawned = true
-
     local open_filename = mp.get_property("stream-open-filename")
     local ytdl = open_filename and network and path ~= open_filename
     if ytdl then
         path = open_filename
     end
 
-    if os_name == "" then
-        os_name = get_os()
-    end
-
-    if options.socket == "" then
-        if os_name == "Windows" then
-            options.socket = "thumbfast"
-        elseif os_name == "Mac" then
-            options.socket = "/tmp/thumbfast"
-        else
-            options.socket = "/tmp/thumbfast"
-        end
-    end
-
-    if options.tnpath == "" then
-        if os_name == "Windows" then
-            options.tnpath = os.getenv("TEMP").."\\thumbfast.out"
-        elseif os_name == "Mac" then
-            options.tnpath = "/tmp/thumbfast.out"
-        else
-            options.tnpath = "/tmp/thumbfast.out"
-        end
-    end
-
-    if not init then
-        -- ensure uniqueness
-        options.socket = options.socket .. unique
-        options.tnpath = options.tnpath .. unique
-        init = true
-    end
-
     remove_thumbnail_files()
 
-    local mpv_hwdec = "no"
-    if options.hwdec then mpv_hwdec = "auto" end
-    mp.command_native_async(
-        {name = "subprocess", playback_only = true, args = {
-            "mpv", path, "--config=no", "--terminal=no", "--msg-level=all=no", "--idle=yes", "--keep-open=always","--pause=yes", "--ao=null", "--vo=null",
-            "--load-auto-profiles=no", "--load-osd-console=no", "--load-stats-overlay=no", "--osc=no",
-            "--vd-lavc-skiploopfilter=all", "--vd-lavc-skipidct=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..mpv_hwdec,
-            "--edition="..(mp.get_property_number("edition") or "auto"), "--vid="..(mp.get_property_number("vid") or "auto"), "--sub=no", "--audio=no", "--sub-auto=no", "--audio-file-auto=no",
-            "--input-ipc-server="..options.socket,
-            "--start="..time,
-            "--ytdl-format=worst", "--demuxer-readahead-secs=0", "--demuxer-max-bytes=128KiB",
-            "--gpu-dumb-mode=yes", "--tone-mapping=clip", "--hdr-compute-peak=no",
-            "--sws-scaler=point", "--sws-fast=yes", "--sws-allow-zimg=no",
-            "--audio-pitch-correction=no",
-            "--vf=".."scale=w="..effective_w..":h="..effective_h..":flags=neighbor,format=bgra",
-            "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--ocopy-metadata=no", "--o="..options.tnpath
-        }},
-        function() end
-    )
-end
+    local vid = mp.get_property_number("vid")
+    has_vid = vid or 0
 
-local function run(command, callback)
-    if not spawned then return end
+    local args = {
+        mpv_path, path, "--config=no", "--terminal=no", "--msg-level=all=no", "--idle=yes", "--keep-open=always","--pause=yes", "--ao=null", "--vo=null",
+        "--load-auto-profiles=no", "--load-osd-console=no", "--load-stats-overlay=no", "--osc=no",
+        "--vd-lavc-skiploopfilter=all", "--vd-lavc-skipidct=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..(options.hwdec and "auto" or "no"),
+        "--edition="..(mp.get_property_number("edition") or "auto"), "--vid="..(vid or "auto"), "--sub=no", "--audio=no", "--sub-auto=no", "--audio-file-auto=no",
+        "--start="..time,
+        "--ytdl-format=worst", "--demuxer-readahead-secs=0", "--demuxer-max-bytes=128KiB",
+        "--gpu-dumb-mode=yes", "--tone-mapping=clip", "--hdr-compute-peak=no",
+        "--sws-scaler=point", "--sws-fast=yes", "--sws-allow-zimg=no",
+        "--audio-pitch-correction=no",
+        "--vf=".."scale=w="..effective_w..":h="..effective_h..":flags=neighbor,format=bgra",
+        "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--ocopy-metadata=no", "--o="..options.tnpath
+    }
 
-    callback = callback or function() end
-
-    local seek_command
     if os_name == "Windows" then
-        seek_command = {"cmd", "/c", "echo "..command.." > \\\\.\\pipe\\" .. options.socket}
-    elseif os_name == "Mac" then
-        -- this doesn't work, on my system. not sure why.
-        seek_command = {"/usr/bin/env", "sh", "-c", "echo '"..command.."' | nc -w0 -U " .. options.socket}
+        table.insert(args, "--input-ipc-server="..options.socket)
     else
-        seek_command = {"/usr/bin/env", "sh", "-c", "echo '" .. command .. "' | socat - " .. options.socket}
+        local client_script_path = options.socket..".run"
+        local file = io.open(client_script_path, "w+")
+        if file == nil then
+            mp.msg.error("client script write failed")
+            return
+        else
+            file:write(string.format(client_script, options.socket))
+            file:close()
+            subprocess({"chmod", "+x", client_script_path}, true)
+            table.insert(args, "--script="..client_script_path)
+        end
     end
 
-    mp.command_native_async(
-        {name = "subprocess", playback_only = true, capture_stdout = true, args = seek_command},
-        callback
+    spawned = true
+    spawn_waiting = true
+
+    subprocess(args, true,
+        function(success, result)
+            if spawn_waiting and (success == false or result.status ~= 0) then
+                mp.msg.error("mpv subprocess create failed")
+            end
+            spawned = false
+        end
     )
 end
 
-local function thumb_index(thumbtime)
-    return math.floor(thumbtime / interval)
-end
+local function run(command)
+    if not spawned then return end
 
-local function index_time(index, thumbtime)
-    if interval > 0 then
-        local time = index * interval
-        return time + interval / 3
+    if options.direct_io then
+        local hPipe = winapi.C.CreateFileW(winapi.socket_wc, winapi.GENERIC_WRITE, 0, nil, winapi.OPEN_EXISTING, winapi._createfile_pipe_flags, nil)
+        if hPipe ~= winapi.INVALID_HANDLE_VALUE then
+            local buf = command .. "\n"
+            winapi.C.SetNamedPipeHandleState(hPipe, winapi.PIPE_NOWAIT, nil, nil)
+            winapi.C.WriteFile(hPipe, buf, #buf + 1, winapi._lpNumberOfBytesWritten, nil)
+            winapi.C.CloseHandle(hPipe)
+        end
+
+        return
+    end
+
+    local file = nil
+    if os_name == "Windows" then
+        file = io.open("\\\\.\\pipe\\"..options.socket, "r+")
     else
-        return thumbtime
+        file = io.open(options.socket, "r+")
+    end
+    if file ~= nil then
+        file:seek("end")
+        file:write(command.."\n")
+        file:close()
     end
 end
 
@@ -249,9 +370,7 @@ local function draw(w, h, script)
     local display_w, display_h = w, h
 
     if x ~= nil then
-        mp.command_native(
-            {name = "overlay-add", id=options.overlay_id, x=x, y=y, file=options.tnpath..".bgra", offset=0, fmt="bgra", w=display_w, h=display_h, stride=(4*display_w)}
-        )
+        mp.command_native({name = "overlay-add", id=options.overlay_id, x=x, y=y, file=options.tnpath..".bgra", offset=0, fmt="bgra", w=display_w, h=display_h, stride=(4*display_w)})
     elseif script then
         local json, err = mp.utils.format_json({width=display_w, height=display_h, x=x, y=y, socket=options.socket, tnpath=options.tnpath, overlay_id=options.overlay_id})
         mp.commandv("script-message-to", script, "thumbfast-render", json)
@@ -290,47 +409,65 @@ local function move_file(from, to)
     os.rename(from, to)
 end
 
-local last_seek = 0
-local function seek()
+local function seek(fast)
     if last_seek_time then
-        last_seek = mp.get_time()
-        run("async seek " .. last_seek_time .. " " .. seek_flag)
+        if options.precise == true then run("async seek " .. last_seek_time .. " absolute+exact")
+        elseif options.precise == false then run("async seek " .. last_seek_time .. " absolute+keyframes")
+        elseif options.precise == "auto" then
+            run("async seek " .. last_seek_time .. (fast and " absolute+keyframes" or " absolute+exact"))
+        end
     end
 end
 
 local seek_period = options.frequency
-local seek_timer = mp.add_timeout(seek_period, seek)
+local seek_period_counter = 0
+local seek_timer
+seek_timer = mp.add_periodic_timer(seek_period, function()
+    if seek_period_counter == 0 then
+        seek(true)
+        seek_period_counter = 1
+    else
+        if seek_period_counter == 2 then
+            seek_timer:kill()
+            seek()
+        else seek_period_counter = seek_period_counter + 1 end
+    end
+end)
 seek_timer:kill()
+
 local function request_seek()
-    if seek_timer:is_enabled() then return end
-    local next_seek = seek_period - (mp.get_time() - last_seek)
-    if next_seek <= 0 then seek() return end
-    seek_timer.timeout = next_seek
-    seek_timer:resume()
+    if seek_timer:is_enabled() then
+        seek_period_counter = 0
+    else
+        seek_timer:resume()
+        seek(true)
+        seek_period_counter = 1
+    end
 end
 
 local function check_new_thumb()
-    local finfo = mp.utils.file_info(options.tnpath)
-    if not finfo then return false end
-
     -- the slave might start writing to the file after checking existance and
     -- validity but before actually moving the file, so move to a temporary
     -- location before validity check to make sure everything stays consistant
     -- and valid thumbnails don't get overwritten by invalid ones
     local tmp = options.tnpath..".tmp"
     move_file(options.tnpath, tmp)
+    local finfo = mp.utils.file_info(tmp)
+    if not finfo then return false end
+    spawn_waiting = false
     if first_file then
         request_seek()
         first_file = false
     end
-    finfo = mp.utils.file_info(tmp)
-    if not finfo then return false end
     local w, h = real_res(effective_w, effective_h, finfo.size)
     if w then -- only accept valid thumbnails
         move_file(tmp, options.tnpath..".bgra")
 
         real_w, real_h = w, h
-        if real_w then info(real_w, real_h) end
+        if real_w and (real_w ~= last_real_w or real_h ~= last_real_h) then
+            last_real_w, last_real_h = real_w, real_h
+            info(real_w, real_h)
+        end
         return true
     end
     return false
@@ -349,26 +486,23 @@ local function thumb(time, r_x, r_y, script)
     time = tonumber(time)
     if time == nil then return end
 
-    if r_x == nil or r_y == nil then
+    if r_x == "" or r_y == "" then
         x, y = nil, nil
     else
         x, y = math.floor(r_x + 0.5), math.floor(r_y + 0.5)
     end
 
-    local index = thumb_index(time)
-    local seek_time = index_time(index, time)
-
     script_name = script
-    if last_x ~= x or last_y ~= y or seek_time ~= last_seek_time or not show_thumbnail then
+    if last_x ~= x or last_y ~= y or not show_thumbnail then
         show_thumbnail = true
         last_x = x
         last_y = y
         draw(real_w, real_h, script)
     end
 
-    if seek_time == last_seek_time then return end
-    last_seek_time = seek_time
-    if not spawned then spawn(seek_time) end
+    if time == last_seek_time then return end
+    last_seek_time = time
+    if not spawned then spawn(time) end
     request_seek()
     if not file_timer:is_enabled() then file_timer:resume() end
 end
@@ -380,9 +514,8 @@ local function clear()
     show_thumbnail = false
     last_x = nil
     last_y = nil
-    mp.command_native(
-        {name = "overlay-remove", id=options.overlay_id}
-    )
+    if script_name then return end
+    mp.command_native({name = "overlay-remove", id=options.overlay_id})
 end
 
 local function watch_changes()
@@ -391,26 +524,51 @@ local function watch_changes()
 
     calc_dimensions()
 
+    local resized = old_w ~= effective_w or old_h ~= effective_h
+
+    if resized then
+        info(effective_w, effective_h)
+    elseif last_has_vid ~= has_vid and has_vid ~= 0 then
+        info(effective_w, effective_h)
+    end
+
     if spawned then
-        if old_w ~= effective_w or old_h ~= effective_h then
+        if resized then
             -- mpv doesn't allow us to change output size
             run("quit")
             clear()
-            info(effective_w, effective_h)
             spawned = false
             spawn(last_seek_time or mp.get_property_number("time-pos", 0))
         end
-    else
-        if old_w ~= effective_w or old_h ~= effective_h then
-            info(effective_w, effective_h)
-        end
     end
+
+    last_has_vid = has_vid
 end
 
+local watch_changes_debounce = debounce(watch_changes, 500)
+
 local function sync_changes(prop, val)
-    if spawned and val then
-        run("set "..prop.." "..val)
+    if val == nil then return end
+
+    if type(val) == "boolean" then
+        if prop == "vid" then
+            has_vid = 0
+            last_has_vid = 0
+            info(effective_w, effective_h)
+            clear()
+            return
+        end
+        val = val and "yes" or "no"
     end
+
+    if prop == "vid" then
+        has_vid = 1
+    end
+
+    if not spawned then return end
+
+    run("set "..prop.." "..val)
+    watch_changes_debounce()
 end
 
 local function file_load()
@@ -418,17 +576,9 @@ local function file_load()
     real_w, real_h = nil, nil
     last_seek_time = nil
 
-    network = mp.get_property_bool("demuxer-via-network", false)
-    local image = mp.get_property_native("current-tracks/video/image", true)
-    local albumart = image and mp.get_property_native("current-tracks/video/albumart", false)
-    local short_video = mp.get_property_native("duration", 0) <= options.min_duration
-
-    disabled = (network and not options.network) or (albumart and not options.audio) or (image and not albumart) or (short_video and options.min_duration > 0)
     calc_dimensions()
     info(effective_w, effective_h)
     if disabled then return end
-
-    interval = math.min(math.max(mp.get_property_number("duration", 1) / options.max_thumbs, 0), mp.get_property_number("duration", 0) / 2)
 
     spawned = false
     if options.spawn_first then
@@ -440,7 +590,10 @@ end
 local function shutdown()
     run("quit")
     remove_thumbnail_files()
-    os.remove(options.socket)
+    if os_name ~= "Windows" then
+        os.remove(options.socket)
+        os.remove(options.socket..".run")
+    end
 end
 
 mp.observe_property("display-hidpi-scale", "native", watch_changes)
