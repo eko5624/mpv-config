@@ -1,7 +1,6 @@
 #!/bin/sh
 set -x
 
-export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 mkdir -p "${DIR}"/macos_config/scripts
 mkdir -p "${DIR}"/macos_config/script-opts
