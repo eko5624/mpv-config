@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@main
       with:
         fetch-depth: 0
     - name: Install git
@@ -22,6 +22,6 @@ jobs:
     - name: Executable flag setting
       run: |
         git checkout main
-        chmod +x macos_config/install.command
-        git commit macos_config/install.command -m "Executable-flag-setting"
+        chmod +x *.sh 
+        git commit -m "Executable-flag-setting"
         git push  
