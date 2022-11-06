@@ -24,4 +24,4 @@ jobs:
       run: |
         ./*config.sh
         git commit -am "Automate" || echo "nothing updated"
-        git push
+        git push -f
