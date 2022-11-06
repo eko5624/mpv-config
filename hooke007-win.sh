@@ -1,7 +1,6 @@
 #!/bin/sh
 set -x
 
-export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 mkdir -p "${DIR}"/portable_config/scripts
 mkdir -p "${DIR}"/portable_config/script-opts
@@ -30,3 +29,7 @@ mv MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
 
 rm -rf MPV_lazy
 
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
+mv ./SmartCopyPaste_II.lua scripts
+mv ./SmartCopyPaste_II.conf script-opts
