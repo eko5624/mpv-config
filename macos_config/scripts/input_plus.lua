@@ -4,43 +4,93 @@
 
 input.conf 示例：
 
- #                    script-binding input_plus/mark_aid_A          # 标记当前音轨为A
- #                    script-binding input_plus/mark_aid_B          # 标记当前音轨为B
- #                    script-binding input_plus/mark_aid_merge      # 合并AB音轨
- #                    script-binding input_plus/mark_aid_reset      # 取消AB并轨和标记
+ Ctrl+a               script-binding input_plus/adevice_back        # 上一个音频输出设备
+#                     script-binding input_plus/adevice_next        # 下...
+#                     script-binding input_plus/adevice_all_back    # 上...（包括不属于当前 --ao 的设备）
+#                     script-binding input_plus/adevice_all_next    # 下...
+
+#                     script-binding input_plus/mark_aid_A          # 标记当前音轨为A
+#                     script-binding input_plus/mark_aid_B          # 标记当前音轨为B
+#                     script-binding input_plus/mark_aid_merge      # 合并AB音轨
+#                     script-binding input_plus/mark_aid_reset      # 取消AB并轨和标记
  m                    script-binding input_plus/mark_aid_fin        # （单键实现上述四项命令）
 
  Alt+p                script-binding input_plus/playlist_order_0    # 播放列表的洗牌与撤销
- #                    script-binding input_plus/playlist_order_0r   # ...（重定向至首个文件）
- #                    script-binding input_plus/playlist_order_1    # 播放列表连续洗牌（可用上两项命令恢复）
- #                    script-binding input_plus/playlist_order_1r   # ...
+#                     script-binding input_plus/playlist_order_0r   # ...（重定向至首个文件）
+#                     script-binding input_plus/playlist_order_1    # 播放列表连续洗牌（可用上两项命令恢复）
+#                     script-binding input_plus/playlist_order_1r   # ...
+#                     script-binding input_plus/playlist_tmp_save   # 保存当前播放列表为临时列表（位于主设置目录 playlist_temp.mpl ）
+#                     script-binding input_plus/playlist_tmp_load   # 打开临时播放列表
 
  CLOSE_WIN            script-binding input_plus/quit_real           # 对执行退出命令前的确认（防止误触）
- #                    script-binding input_plus/quit_wait           # 延后退出命令的执行（执行前再次触发可取消）
+#                     script-binding input_plus/quit_wait           # 延后退出命令的执行（执行前再次触发可取消）
 
- #                    script-binding input_plus/seek_auto_back      # [可持续触发] 后退至上句字幕的时间点或上一关键帧
- #                    script-binding input_plus/seek_auto_next      # [可持续触发] 前进至下...
- #                    script-binding input_plus/seek_skip_back      # 向后大跳（精确帧）
- #                    script-binding input_plus/seek_skip_next      # 向前...
+#                     script-binding input_plus/seek_auto_back      # [可持续触发] 后退至上句字幕的时间点或上一关键帧
+#                     script-binding input_plus/seek_auto_next      # [可持续触发] 前进至下...
+#                     script-binding input_plus/seek_skip_back      # 向后大跳（精确帧）
+#                     script-binding input_plus/seek_skip_next      # 向前...
 
  SPACE                script-binding input_plus/speed_auto          # [按住/松开] 两倍速/一倍速
- #                    script-binding input_plus/speed_auto_bullet   # [按住/松开] 子弹时间/一倍速
- #                    script-binding input_plus/speed_recover       # 仿Pot的速度重置与恢复
+#                     script-binding input_plus/speed_auto_bullet   # [按住/松开] 子弹时间/一倍速
+#                     script-binding input_plus/speed_recover       # 仿Pot的速度重置与恢复
 
- #                    script-binding input_plus/stats_1_2           # 单键浏览统计数据第1至2页
- #                    script-binding input_plus/stats_0_4           # 单键浏览统计数据第0至4页
+#                     script-binding input_plus/stats_1_2           # 单键浏览统计数据第1至2页
+#                     script-binding input_plus/stats_0_4           # 单键浏览统计数据第0至4页
 
- #                    script-binding input_plus/trackA_back         # 上一个音频轨道（自动跳过无轨道）
- #                    script-binding input_plus/trackA_next         # 下...
- #                    script-binding input_plus/trackS_back         # 上一个字幕轨道...
- #                    script-binding input_plus/trackS_next         # 下...
- #                    script-binding input_plus/trackV_back         # 上一个视频轨道...
- #                    script-binding input_plus/trackV_next         # 下...
+#                     script-binding input_plus/trackA_back         # 上一个音频轨道（自动跳过无轨道）
+#                     script-binding input_plus/trackA_next         # 下...
+#                     script-binding input_plus/trackS_back         # 上一个字幕轨道...
+#                     script-binding input_plus/trackS_next         # 下...
+#                     script-binding input_plus/trackV_back         # 上一个视频轨道...
+#                     script-binding input_plus/trackV_next         # 下...
 
- #                    script-binding input_plus/x264_cmpt           # 开/关 旧版x264即时兼容模式
+#                     script-binding input_plus/x264_cmpt           # 开/关 旧版x264即时兼容模式
 
 --]]
 
+
+--
+-- 函数设定
+--
+
+
+local adevicelist = {}
+function adevicelist_update(start, fin, step, dynamic)
+	local target_ao = nil
+	if dynamic then
+		target_ao = ""
+	else
+		target_ao = mp.get_property_native("current-ao", "")
+	end
+	while start ~= fin + step do
+		if string.find(mp.get_property_native("audio-device"), adevicelist[start].name, 1, true) then
+			while true do
+				if start + step == 0 then
+					start = #adevicelist + 1
+				elseif start + step == #adevicelist + 1 then
+					start = 0
+				end
+				start = start + step
+				if string.find(adevicelist[start].name, target_ao, 1, true) then
+					mp.set_property("audio-device", adevicelist[start].name)
+					adevicelist[start].description = "■ " .. adevicelist[start].description
+					local adevice_content = tostring("音频输出设备：\n")
+					for items = 1, #adevicelist do
+						if string.find(adevicelist[items].name, target_ao, 1, true) then
+							if adevicelist[items].name ~= adevicelist[start].name then
+								adevice_content = adevice_content .. "□ "
+							end
+							adevice_content = adevice_content .. adevicelist[items].description .. "\n"
+						end
+					end
+					mp.osd_message(adevice_content, 2)
+					return
+				end
+			end
+		end
+		start = start + step
+	end
+end
 
 local marked_aid_A = nil
 local marked_aid_B = nil
@@ -101,7 +151,8 @@ end
 
 local shuffled = false
 local shuffling = false
-function show_playlist()
+local save_path = mp.command_native({"expand-path", "~~/"}) .. "/playlist_temp.mpl"
+function show_playlist_shuffle()
 	mp.add_timeout(0.1, function()
 		local shuffle_msg = mp.command_native({"expand-text", "${playlist}"})
 		shuffling = false
@@ -125,14 +176,14 @@ function playlist_order(mode, re)
 			if re then
 				mp.commandv("playlist-play-index", 0)
 			end
-			show_playlist()
+			show_playlist_shuffle()
 		else
 			mp.command("playlist-unshuffle")
 			shuffled = false
 			if re then
 				mp.commandv("playlist-play-index", 0)
 			end
-			show_playlist()
+			show_playlist_shuffle()
 		end
 	elseif mode == 1 then
 		if shuffled then
@@ -141,15 +192,42 @@ function playlist_order(mode, re)
 			if re then
 				mp.commandv("playlist-play-index", 0)
 			end
-			show_playlist()
+			show_playlist_shuffle()
 		else
 			mp.command("playlist-shuffle")
 			shuffled = true
 			if re then
 				mp.commandv("playlist-play-index", 0)
 			end
-			show_playlist()
+			show_playlist_shuffle()
 		end
+	end
+end
+function playlist_tmp_save()
+	local item_num = mp.get_property_number("playlist-count", 0)
+	if item_num == 0 then
+		mp.osd_message("播放列表中无文件", 1)
+		return
+	end
+	local file, err = io.open(save_path, "w")
+	file:write("#EXTM3U\n\n")
+	local Nn = 0
+	while Nn < item_num do
+		local save_item = mp.get_property("playlist/"..Nn.."/filename")
+		file:write(save_item, "\n")
+		Nn = Nn+1
+	end
+	local save_info = tostring("已保存至临时播放列表")
+	mp.osd_message(save_info, 1)
+	mp.msg.info("playlist_tmp_save 主设置文件夹/playlist_temp.mpl")
+	file:close()
+end
+function playlist_tmp_load()
+	mp.commandv("loadlist", save_path, "replace")
+	if mp.get_property_number("playlist-count", 0) == 0 then
+		mp.osd_message("临时播放列表加载失败", 1)
+	else
+		mp.osd_message(mp.command_native({"expand-text", "${playlist}"}), 2)
 	end
 end
 
@@ -286,6 +364,7 @@ end
 -- 事件注册
 --
 
+
 mp.register_event("end-file", function() if marked_aid_A ~= nil or marked_aid_B ~= nil then mark_aid_reset() end end)
 
 --mp.register_event("end-file", function() if temp_avc then mp.set_property_bool("vd-lavc-assume-old-x264", false) temp_avc = false end end)
@@ -295,6 +374,12 @@ mp.register_event("start-file", function() if temp_avc then mp.msg.warn(x264_cmp
 --
 -- 键位绑定
 --
+
+
+mp.add_key_binding(nil, "adevice_back", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(#adevicelist, 1, -1) end)
+mp.add_key_binding(nil, "adevice_next", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(1, #adevicelist, 1) end)
+mp.add_key_binding(nil, "adevice_all_back", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(#adevicelist, 1, -1, true) end)
+mp.add_key_binding(nil, "adevice_all_next", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(1, #adevicelist, 1, true) end)
 
 mp.add_key_binding(nil, "mark_aid_A", mark_aid_A)
 mp.add_key_binding(nil, "mark_aid_B", mark_aid_B)
@@ -306,6 +391,8 @@ mp.add_key_binding(nil, "playlist_order_0", function() playlist_order(0) end)
 mp.add_key_binding(nil, "playlist_order_0r", function() playlist_order(0, true) end)
 mp.add_key_binding(nil, "playlist_order_1", function() playlist_order(1) end)
 mp.add_key_binding(nil, "playlist_order_1r", function() playlist_order(1, true) end)
+mp.add_key_binding(nil, "playlist_tmp_save", playlist_tmp_save)
+mp.add_key_binding(nil, "playlist_tmp_load", playlist_tmp_load)
 
 mp.add_key_binding(nil, "quit_real", quit_real)
 mp.add_key_binding(nil, "quit_wait", quit_wait)

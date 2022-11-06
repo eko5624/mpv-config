@@ -59,8 +59,8 @@ defaults = {
 	menu_item_height_fullscreen = 50,
 	menu_min_width = 260,
 	menu_min_width_fullscreen = 360,
-	menu_opacity = 0.7,
-	menu_parent_opacity = 0.4,
+	menu_opacity = 0.9,
+	menu_parent_opacity = 0.6,
 
 	top_bar = 'no-border',
 	top_bar_size = 40,
