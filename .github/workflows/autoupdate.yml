@@ -22,6 +22,7 @@ jobs:
     - name: Update
       shell: bash
       run: |
-        ./*config.sh
+        ./macos_config.sh
+        ./portable_config.sh
         git commit -am "Automate" || echo "nothing updated"
         git push -f
