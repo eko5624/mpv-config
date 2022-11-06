@@ -31,7 +31,3 @@ curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/Smar
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
 mv ./SmartCopyPaste_II.lua scripts
 mv ./SmartCopyPaste_II.conf script-opts
-
-
-
-
