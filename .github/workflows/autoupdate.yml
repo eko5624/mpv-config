@@ -22,6 +22,6 @@ jobs:
     - name: Update
       shell: bash
       run: |
-        ./*.sh
+        ./*config.sh
         git commit -am "Automate" || echo "nothing updated"
         git push
