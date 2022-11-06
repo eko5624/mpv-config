@@ -23,5 +23,5 @@ jobs:
       run: |
         git checkout main
         chmod +x *.sh 
-        git commit -m "Executable-flag-setting"
+        git commit *.sh -m "Executable-flag-setting"
         git push  
