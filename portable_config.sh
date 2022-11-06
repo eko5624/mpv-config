@@ -2,8 +2,8 @@
 set -x
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-mkdir -p "${DIR}"/portable_config/scripts
-mkdir -p "${DIR}"/portable_config/script-opts
+rm -rf portable_config/scripts && mkdir -p "${DIR}"/portable_config/scripts
+rm -rf portable_config/script-opts && mkdir -p "${DIR}"/portable_config/script-opts
 
 cd "${DIR}"/portable_config 
 git clone https://github.com/hooke007/MPV_lazy.git --branch main
