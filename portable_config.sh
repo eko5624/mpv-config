@@ -14,6 +14,7 @@ mv MPV_lazy/portable_config/scripts/load_plus.lua scripts
 mv MPV_lazy/portable_config/scripts/osc_plus.lua scripts
 mv MPV_lazy/portable_config/scripts/playlistmanager.lua scripts
 mv MPV_lazy/portable_config/scripts/save_global_props.lua scripts
+mv MPV_lazy/portable_config/scripts/thumbfast.lua scripts
 
 mv MPV_lazy/portable_config/script-opts/console.conf script-opts
 mv MPV_lazy/portable_config/script-opts/contextmenu_gui.conf script-opts
