@@ -1,5 +1,6 @@
 --[[
-SOURCE_ https://github.com/mpv-player/mpv/commit/cc65b3892d89ae35d31067fba285ab20716a1aee
+SOURCE_ https://github.com/mpv-player/mpv/blob/master/player/lua/osc.lua
+COMMIT_ cc65b3892d89ae35d31067fba285ab20716a1aee
 
 改进版本的OSC，须禁用原始mpv的内置OSC，且不兼容其它OSC类脚本（实现全部功能需搭配 新缩略图引擎 thumbfast ）
 
@@ -182,6 +183,7 @@ local thumbfast = {
     width    = 0,
     height   = 0,
     disabled = false,
+    pause    = false,
 }
 
 local window_control_box_width = 80
@@ -900,14 +902,27 @@ function render_elements(master_ass)
                     elem_ass:append(tooltiplabel)
 
                     -- >> 关联 thumbfast.lua
-                    if not thumbfast.disabled and thumbfast.width ~= 0 and thumbfast.height ~= 0 then
+                    if not thumbfast.disabled and thumbfast.width ~= 0 and thumbfast.height ~= 0 and not thumbfast.pause then
                         local osd_w = mp.get_property_number("osd-dimensions/w")
                         if osd_w then
                             local r_w, r_h = get_virt_scale_factor()
+                            local thumb_pad = 4
+                            local thumb_margin_x = 10
+                            local thumb_margin_y = 4
+                            local thumb_x = math.min(osd_w - thumbfast.width - thumb_margin_x, math.max(thumb_margin_x, tx / r_w - thumbfast.width / 2))
+                            local thumb_y = ((ty - (user_opts.layout == "bottombar" and 39 or 18) - user_opts.barmargin) / r_h - (user_opts.layout == "topbar" and -(30 + user_opts.barmargin) / r_h or thumbfast.height)) - thumb_margin_y
+
+                            elem_ass:new_event()
+                            elem_ass:pos(thumb_x * r_w, thumb_y * r_h)
+                            elem_ass:append(("{\\bord0\\1c&H%s&\\1a&H%X&}"):format("000000", user_opts.boxalpha))
+                            elem_ass:draw_start()
+                            elem_ass:rect_cw(-thumb_pad * r_h, -thumb_pad * r_h, (thumbfast.width + thumb_pad) * r_w, (thumbfast.height + thumb_pad) * r_h)
+                            elem_ass:draw_stop()
+
                             mp.commandv("script-message-to", "thumbfast", "thumb",
                                 mp.get_property_number("duration", 0) * (sliderpos / 100),
-                                math.min(osd_w - thumbfast.width - 10, math.max(10, tx / r_w - thumbfast.width / 2)),
-                                ((ty - (user_opts.layout == "bottombar" and 39 or 18) - user_opts.barmargin) / r_h - (user_opts.layout == "topbar" and -(57 + user_opts.barmargin) / r_h or thumbfast.height))
+                                thumb_x,
+                                thumb_y
                             )
                         end
                     end
@@ -2376,6 +2391,8 @@ function osc_init()
             -- mouse move events may pile up during seeking and may still get
             -- sent when the user is done seeking, so we need to throw away
             -- identical seeks
+            thumbfast.pause = false --暂停渲染缩略图
+            mp.commandv("script-message-to", "thumbfast", "clear")
             local seekto = get_slider_value(element)
             if (element.state.lastseek == nil) or
                 (not (element.state.lastseek == seekto)) then
@@ -2386,15 +2403,14 @@ function osc_init()
                     mp.commandv("seek", seekto, flags)
                     element.state.lastseek = seekto
             end
-
         end
+    ne.eventresponder["mouse_leave"] =
+        function (element) thumbfast.pause = true end --恢复渲染缩略图
     ne.eventresponder["mbtn_left_down"] = --exact seeks on single clicks
         function (element) mp.commandv("seek", get_slider_value(element),
             "absolute-percent", "exact") end
     ne.eventresponder["reset"] =
         function (element) element.state.lastseek = nil end
-    ne.eventresponder["mbtn_right_down"] = function (element) mp.commandv('script-message', 'Thumbnailer-toggle-osc') end
-    ne.eventresponder["mbtn_right_dbl_press"] = function (element) mp.commandv('script-message', 'Thumbnailer-double') end
 
     ne.eventresponder["wheel_up_press"] = function ()
         if user_opts.seekbar_scrollseek == "fast" then mp.commandv('seek', -0.1, 'keyframes')

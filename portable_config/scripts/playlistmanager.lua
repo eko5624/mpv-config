@@ -1,6 +1,6 @@
 --[[
 SOURCE_ https://github.com/jonniek/mpv-playlistmanager/blob/master/playlistmanager.lua
-COMMIT_ f00137a91d97cbcbd211b9312a2b4e4b338002fe
+COMMIT_ 76626ee6aaa79e08ac937fa6306b4c59f1cd6ee5
 
 高级播放列表，用于替换内置的过于简洁的列表
 自定义快捷键方案示例，在 input.conf 中另起一行：
@@ -266,6 +266,10 @@ update_opts({filename_replace = true, loadfiles_filetypes = true})
 function on_loaded()
   filename = mp.get_property("filename")
   path = mp.get_property('path')
+  if utils.readdir(path, "dirs") then
+    -- a directory has been loaded, let's not do anything as mpv will expand it into files
+    return
+  end
   --if not a url then join path with working directory
   if not path:match("^%a%a+:%/%/") then
     path = utils.join_path(mp.get_property('working-directory'), path)
@@ -542,7 +546,11 @@ function removefile()
   if cursor==pos then mp.command("script-message unseenplaylist mark true \"playlistmanager avoid conflict when removing file\"") end
   mp.commandv("playlist-remove", cursor)
   if cursor==plen-1 then cursor = cursor - 1 end
-  showplaylist()
+  if plen == 1 then
+    remove_keybinds()
+  else
+    showplaylist()
+  end
 end
 
 function moveup()

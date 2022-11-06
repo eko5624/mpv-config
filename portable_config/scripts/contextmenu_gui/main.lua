@@ -835,8 +835,6 @@ local function playmenuList()
             {COMMAND, "延迟 +0.1", "", "add audio-delay +0.1", "", false, true},
             {COMMAND, "重置偏移", "", "set audio-delay 0", "", false},
             {SEP},
-            {COMMAND, "上个输出设备", "", "script-binding cycle_adevice/back", "", false, true},
-            {COMMAND, "下个输出设备", "", "script-binding cycle_adevice/next", "", false, true},
             {CASCADE, "声道布局", "channel_layout", "", "", false},
         },
 
