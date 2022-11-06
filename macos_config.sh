@@ -1,11 +1,11 @@
 #!/bin/bash
 set -x
 
-DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd )
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 rm -rf macos_config/scripts && mkdir -p "$DIR"/macos_config/scripts
 rm -rf macos_config/script-opts && mkdir -p "$DIR/macos_config/script-opts
 
-cd "$DIR"/macos_config 
+cd $DIR/macos_config 
 git clone https://github.com/hooke007/MPV_lazy.git --branch main
 
 mv MPV_lazy/portable_config/scripts/uosc scripts
