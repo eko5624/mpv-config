@@ -1,0 +1,27 @@
+name: autoupdate
+
+on: 
+   workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+      with:
+        token: ${{ secrets.BOT }}
+    - name: Install git
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install git
+    - name: Set env
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    - name: Update
+      shell: bash
+      run: |
+        ./*.sh
+        git commit -am "Automate" || echo "nothing updated"
+        git push
