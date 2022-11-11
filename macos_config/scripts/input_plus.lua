@@ -9,6 +9,13 @@ input.conf 示例：
 #                     script-binding input_plus/adevice_all_back    # 上...（包括不属于当前 --ao 的设备）
 #                     script-binding input_plus/adevice_all_next    # 下...
 
+#                     script-binding input_plus/info_toggle         # 仿Pot的OSD启用/禁用常驻显示简要信息
+
+ Ctrl+v               script-binding input_plus/load_cbd            # 加载剪贴板地址
+#                     script-binding input_plus/load_cbd_add        # ...（追加到列表）
+#                     script-binding input_plus/load_cbd_alt        # 加载主缓冲区地址（仅Linux可用）
+#                     script-binding input_plus/load_cbd_alt_add    # ...（追加到列表）
+
 #                     script-binding input_plus/mark_aid_A          # 标记当前音轨为A
 #                     script-binding input_plus/mark_aid_B          # 标记当前音轨为B
 #                     script-binding input_plus/mark_aid_merge      # 合并AB音轨
@@ -48,6 +55,8 @@ input.conf 示例：
 
 --]]
 
+
+local utils = require("mp.utils")
 
 --
 -- 函数设定
@@ -90,6 +99,123 @@ function adevicelist_update(start, fin, step, dynamic)
 		end
 		start = start + step
 	end
+end
+
+local osm = mp.create_osd_overlay("ass-events")
+local osm_showing = false
+local style_generic = "{\\rDefault\\fnConsolas\\fs28\\blur1\\bord2\\3c&H000000}"
+function info_get()
+	local osd_dims = mp.get_property_native("osd-dimensions")
+	local w_s, h_s = osd_dims["w"] - osd_dims["ml"] - osd_dims["mr"], osd_dims["h"] - osd_dims["mt"] - osd_dims["mb"]
+	local cur_name = mp.get_property_osd("media-title") or mp.get_property_osd("filename")
+	local vid_params = mp.get_property_native("video-dec-params") or "..."
+	local w_raw, h_raw, pix_fmt, color_lv = vid_params["w"] or 0, vid_params["h"] or 0, vid_params["hw-pixelformat"] or vid_params["pixelformat"] or "...", vid_params["colorlevels"] or "..."
+	local bitrateV, bitrateA = mp.get_property_number("video-bitrate", 0) / 1000, mp.get_property_number("audio-bitrate", 0) / 1000
+	local txt = (
+	style_generic.."输出尺寸： ".."{\\1c&H0099FF}".."["..w_s.."] x ["..h_s.."]".."\n"..
+	style_generic.."解码模式： ".."{\\1c&H0099FF}"..mp.get_property_native("hwdec-current", "...").."\n"..
+	style_generic.."显示同步： ".."{\\1c&H0099FF}"..mp.get_property_native("video-sync", "...").."\n"..
+	style_generic.."丢帧：     ".."{\\1c&H0099FF}"..mp.get_property_number("frame-drop-count", 0).."\n"..
+	style_generic.."文件：     ".."{\\1c&H0099FF}"..cur_name:gsub("\\n", " "):gsub("\\$", ""):gsub("{","\\{").."\n"..
+	style_generic.."视频 ┓".."\n"..
+	style_generic.."____输出： ".."{\\1c&H03A89E}"..mp.get_property_native("current-vo", "...").."\n"..
+	style_generic.."____编码： ".."{\\1c&H03A89E}"..mp.get_property_native("video-codec", "...").."\n"..
+	style_generic.."____尺寸： ".."{\\1c&H03A89E}".."["..w_raw.."] x ["..h_raw.."]".."\n"..
+	style_generic.."____像素： ".."{\\1c&H03A89E}"..pix_fmt.."\n"..
+	style_generic.."____动态： ".."{\\1c&H03A89E}"..color_lv.."\n"..
+	style_generic.."____帧率： ".."{\\1c&H03A89E}"..mp.get_property_number("container-fps", 0).." FPS（原始） "..
+		                                            mp.get_property_number("estimated-vf-fps", 0).." FPS（目标）".."\n"..
+	style_generic.."____码率： ".."{\\1c&H03A89E}"..bitrateV.." kbps".."\n"..
+	style_generic.."音频 ┓".."\n"..
+	style_generic.."____输出： ".."{\\1c&H9EA803}"..mp.get_property_native("current-ao", "...").."\n"..
+	style_generic.."____设备： ".."{\\1c&H9EA803}"..mp.get_property_native("audio-device", "...").."\n"..
+	style_generic.."____编码： ".."{\\1c&H9EA803}"..mp.get_property_native("audio-codec", "...").."\n"..
+	style_generic.."____码率： ".."{\\1c&H9EA803}"..bitrateA.." kbps"
+	)
+	return tostring(txt)
+end
+function info_toggle()
+	if osm_showing then
+		osm:remove()
+		osm_timer:kill()
+		osm_showing = false
+		return
+	end
+	osm.data = info_get()
+	osm:update()
+	osm_showing = true
+	osm_timer = mp.add_periodic_timer(0.5, function()
+		if not osm_showing then
+			osm_timer:kill()
+		else
+			osm.data = info_get()
+			osm:update()
+		end
+	end)
+end
+
+function check_plat()
+	if os.getenv("windir") ~= nil then
+		return "windows"
+	elseif string.sub((os.getenv("HOME")), 1, 6) == "/Users" then
+		return "macos"
+	elseif os.getenv("WAYLAND_DISPLAY") then
+		return "wayland"
+	end
+	return "x11"
+end
+local plat = check_plat()
+function copy_clipboard(clip)
+	if plat == "windows" then
+		local res = utils.subprocess({
+			args = { 'powershell', '-NoProfile', '-Command', [[& {
+				Trap {
+					Write-Error -ErrorRecord $_
+					Exit 1
+				}
+				$clip = ""
+				if (Get-Command "Get-Clipboard" -errorAction SilentlyContinue) {
+					$clip = Get-Clipboard -Raw -Format Text -TextFormatType UnicodeText
+				} else {
+					Add-Type -AssemblyName PresentationCore
+					$clip = [Windows.Clipboard]::GetText()
+				}
+				$clip = $clip -Replace "`r",""
+				$u8clip = [System.Text.Encoding]::UTF8.GetBytes($clip)
+				[Console]::OpenStandardOutput().Write($u8clip, 0, $u8clip.Length)
+			}]] },
+			playback_only = false,
+		})
+		if not res.error then
+			return res.stdout
+		end
+	elseif plat == "macos" then
+		local res = utils.subprocess({args = { 'pbpaste' }, playback_only = false,})
+		if not res.error then
+			return res.stdout
+		end
+	elseif plat == "x11" then
+		local res = utils.subprocess({args = { 'xclip', '-selection', clip and 'clipboard' or 'primary', '-out' }, playback_only = false,})
+		if not res.error then
+			return res.stdout
+		end
+	elseif plat == "wayland" then
+		local res = utils.subprocess({args = { 'wl-paste', clip and '-n' or  '-np' }, playback_only = false,})
+		if not res.error then
+			return res.stdout
+		end
+	end
+	return ""
+end
+local text_pasted = nil
+function load_clipboard(clip, action)
+	local text = copy_clipboard(clip):gsub("^%s*", ""):gsub("%s*$", "")
+	if text == text_pasted and action == "replace" then
+		mp.osd_message("剪贴板内容无变动", 1)
+		return
+	end
+	mp.commandv("loadfile", text, action)
+	text_pasted = text
 end
 
 local marked_aid_A = nil
@@ -380,6 +506,13 @@ mp.add_key_binding(nil, "adevice_back", function() adevicelist = mp.get_property
 mp.add_key_binding(nil, "adevice_next", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(1, #adevicelist, 1) end)
 mp.add_key_binding(nil, "adevice_all_back", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(#adevicelist, 1, -1, true) end)
 mp.add_key_binding(nil, "adevice_all_next", function() adevicelist = mp.get_property_native("audio-device-list") adevicelist_update(1, #adevicelist, 1, true) end)
+
+mp.add_key_binding(nil, "info_toggle", info_toggle)
+
+mp.add_key_binding(nil, "load_cbd", function() load_clipboard(true, "replace") end)
+mp.add_key_binding(nil, "load_cbd_alt", function() load_clipboard(false, "replace") end)
+mp.add_key_binding(nil, "load_cbd_add", function() load_clipboard(true, "append-play") end)
+mp.add_key_binding(nil, "load_cbd_alt_add", function() load_clipboard(false, "append-play") end)
 
 mp.add_key_binding(nil, "mark_aid_A", mark_aid_A)
 mp.add_key_binding(nil, "mark_aid_B", mark_aid_B)
