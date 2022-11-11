@@ -22,7 +22,9 @@ jobs:
     - name: Update
       shell: bash
       run: |
-        ./*.sh
+        ./macos_config.sh
+        ./portable_config.sh
+        ./thumbfast+uosc.sh
         git add -A
         git commit -am "Automate" || echo "nothing updated"
         git push
