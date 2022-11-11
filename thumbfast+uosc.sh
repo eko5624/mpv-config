@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 
-DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 mkdir -p $DIR/thumbfast+uosc/scripts
 mkdir -p $DIR/thumbfast+uosc/script-opts
