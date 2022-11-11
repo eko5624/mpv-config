@@ -26,6 +26,8 @@ mv MPV_lazy/portable_config/script-opts/thumbfast.conf script-opts
 mv MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 mv MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
 
+mv MPV_lazy/portable_config/fonts ./
+
 rm -rf MPV_lazy
 
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
