@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 
-DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 cd $DIR/portable_config 
 git clone https://github.com/hooke007/MPV_lazy.git --branch main
