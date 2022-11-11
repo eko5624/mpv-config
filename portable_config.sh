@@ -27,6 +27,8 @@ mv MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 mv MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
 
 mv MPV_lazy/portable_config/fonts ./
+mv MPV_lazy/portable_config/luts ./
+mv MPV_lazy/portable_config/vs ./
 
 rm -rf MPV_lazy
 
