@@ -1,6 +1,6 @@
 --[[
 SOURCE_ https://github.com/tomasklaen/uosc/tree/main/scripts
-COMMIT_ 64feeb04b78d7132e02242cea5d3bd179003199a
+COMMIT_ 107e758144448ca66554f7f8902f4cbf58bfb566
 
 极简主义设计驱动的多功能界面脚本群组，兼容 thumbfast 新缩略图引擎
 ]]--
@@ -489,7 +489,7 @@ function load_file_index_in_current_directory(index)
 		if index < 0 then index = #files + index + 1 end
 
 		if files[index] then
-			mp.commandv('loadfile', utils.join_path(serialized.dirname, files[index]))
+			mp.commandv('loadfile', join_path(serialized.dirname, files[index]))
 		end
 	end
 end
@@ -907,7 +907,7 @@ mp.add_key_binding(nil, 'open-file', function()
 	-- Update active file in directory navigation menu
 	local function handle_file_loaded()
 		if Menu:is_open('open-file') then
-			Elements.menu:activate_value(normalize_path(mp.get_property_native('path')))
+			Elements.menu:activate_one_value(normalize_path(mp.get_property_native('path')))
 		end
 	end
 
@@ -1008,7 +1008,7 @@ mp.add_key_binding(nil, 'audio-device', create_self_updating_menu_opener({
 }))
 mp.add_key_binding(nil, 'open-config-directory', function()
 	local config_path = mp.command_native({'expand-path', '~~/mpv.conf'})
-	local config = serialize_path(config_path)
+	local config = serialize_path(normalize_path(config_path))
 
 	if config then
 		local args
