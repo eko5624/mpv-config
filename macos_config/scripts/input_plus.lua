@@ -51,12 +51,27 @@ input.conf 示例：
 #                     script-binding input_plus/trackV_back         # 上一个视频轨道...
 #                     script-binding input_plus/trackV_next         # 下...
 
-#                     script-binding input_plus/x264_cmpt           # 开/关 旧版x264即时兼容模式
+#                     script-binding input_plus/trackA_refresh      # 刷新当前轨道（音频）
+#                     script-binding input_plus/trackS_refresh      # ...（字幕）
+#                     script-binding input_plus/trackV_refresh      # ...（视频）
 
 --]]
 
 
 local utils = require("mp.utils")
+
+function check_plat()
+	if os.getenv("windir") ~= nil then
+		return "windows"
+	elseif string.sub((os.getenv("HOME")), 1, 6) == "/Users" then
+		return "macos"
+	elseif os.getenv("WAYLAND_DISPLAY") then
+		return "wayland"
+	end
+	return "x11"
+end
+local plat = check_plat()
+
 
 --
 -- 函数设定
@@ -154,17 +169,6 @@ function info_toggle()
 	end)
 end
 
-function check_plat()
-	if os.getenv("windir") ~= nil then
-		return "windows"
-	elseif string.sub((os.getenv("HOME")), 1, 6) == "/Users" then
-		return "macos"
-	elseif os.getenv("WAYLAND_DISPLAY") then
-		return "wayland"
-	end
-	return "x11"
-end
-local plat = check_plat()
 function copy_clipboard(clip)
 	if plat == "windows" then
 		local res = utils.subprocess({
@@ -208,7 +212,10 @@ function copy_clipboard(clip)
 	return ""
 end
 local text_pasted = nil
-function load_clipboard(clip, action)
+function load_clipboard(action, clip)
+	if not clip and (plat == "windows" or plat == "macos") then
+		return
+	end
 	local text = copy_clipboard(clip):gsub("^%s*", ""):gsub("%s*$", "")
 	if text == text_pasted and action == "replace" then
 		mp.osd_message("剪贴板内容无变动", 1)
@@ -287,7 +294,7 @@ function show_playlist_shuffle()
 end
 function playlist_order(mode, re)
 	if shuffling then
-		mp.msg.info("已阻止高频洗牌")
+		mp.msg.info("playlist_order 已阻止高频洗牌")
 		return
 	end
 	if mp.get_property_number("playlist-count") <= 2 then
@@ -461,29 +468,34 @@ function track_seek(id, num)
 	end
 end
 
+function track_refresh(id)
+	local current_id = mp.get_property_number(id, 0)
+	if current_id == 0 then
+		mp.msg.warn("track_refresh 当前轨道无效")
+		return
+	end
+	mp.set_property_number(id, 0)
+	mp.set_property_number(id, current_id)
+end
+
+--[[
 local temp_avc = false
 local x264_cmpt_warn = tostring("x264_cmpt 可能破坏常规h264文件的播放")
 function x264_cmpt()
-	local current_vid = mp.get_property_number("vid", 0)
-	if current_vid == 0 then
-		mp.osd_message("当前视频轨道无效", 1)
-		return
-	end
 	if temp_avc then
 		mp.set_property_bool("vd-lavc-assume-old-x264", false)
 		temp_avc = false
 		mp.osd_message("已禁用旧版x264即时兼容模式", 1)
-		mp.set_property_number("vid", 0)
-		mp.set_property_number("vid", current_vid)
+		track_refresh("vid")
 		return
 	end
 	mp.set_property_bool("vd-lavc-assume-old-x264", true)
 	temp_avc = true
 	mp.osd_message("已启用旧版x264即时兼容模式", 1)
 	mp.msg.warn(x264_cmpt_warn)
-	mp.set_property_number("vid", 0)
-	mp.set_property_number("vid", current_vid)
+	track_refresh("vid")
 end
+--]]
 
 
 --
@@ -494,7 +506,7 @@ end
 mp.register_event("end-file", function() if marked_aid_A ~= nil or marked_aid_B ~= nil then mark_aid_reset() end end)
 
 --mp.register_event("end-file", function() if temp_avc then mp.set_property_bool("vd-lavc-assume-old-x264", false) temp_avc = false end end)
-mp.register_event("start-file", function() if temp_avc then mp.msg.warn(x264_cmpt_warn) end end)
+--mp.register_event("start-file", function() if temp_avc then mp.msg.warn(x264_cmpt_warn) end end)
 
 
 --
@@ -509,10 +521,10 @@ mp.add_key_binding(nil, "adevice_all_next", function() adevicelist = mp.get_prop
 
 mp.add_key_binding(nil, "info_toggle", info_toggle)
 
-mp.add_key_binding(nil, "load_cbd", function() load_clipboard(true, "replace") end)
-mp.add_key_binding(nil, "load_cbd_alt", function() load_clipboard(false, "replace") end)
-mp.add_key_binding(nil, "load_cbd_add", function() load_clipboard(true, "append-play") end)
-mp.add_key_binding(nil, "load_cbd_alt_add", function() load_clipboard(false, "append-play") end)
+mp.add_key_binding(nil, "load_cbd", function() load_clipboard("replace", true) end)
+mp.add_key_binding(nil, "load_cbd_alt", function() load_clipboard("replace") end)
+mp.add_key_binding(nil, "load_cbd_add", function() load_clipboard("append-play", true) end)
+mp.add_key_binding(nil, "load_cbd_alt_add", function() load_clipboard("append-play") end)
 
 mp.add_key_binding(nil, "mark_aid_A", mark_aid_A)
 mp.add_key_binding(nil, "mark_aid_B", mark_aid_B)
@@ -549,4 +561,8 @@ mp.add_key_binding(nil, "trackS_next", function() track_seek("sid", 1) end)
 mp.add_key_binding(nil, "trackV_back", function() track_seek("vid", -1) end)
 mp.add_key_binding(nil, "trackV_next", function() track_seek("vid", 1) end)
 
-mp.add_key_binding(nil, "x264_cmpt", x264_cmpt)
+mp.add_key_binding(nil, "trackA_refresh", function() track_refresh("aid") end)
+mp.add_key_binding(nil, "trackS_refresh", function() track_refresh("sid") end)
+mp.add_key_binding(nil, "trackV_refresh", function() track_refresh("vid") end)
+
+--mp.add_key_binding(nil, "x264_cmpt", x264_cmpt)

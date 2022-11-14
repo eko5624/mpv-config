@@ -1,6 +1,6 @@
 --[[
 SOURCE_ https://github.com/po5/thumbfast/blob/master/thumbfast.lua
-COMMIT_ 38dc494c68534cefff0cf6a207004dc9d609c87c
+COMMIT_ a145b37dc296837a4e48dff68beeeefc674c9bb3
 
 适配多个OSC类脚本的新缩略图引擎
 ]]--
@@ -254,6 +254,8 @@ local function calc_dimensions()
     end
 end
 
+local info_timer = nil
+
 local function info(w, h)
     local display_w, display_h = w, h
 
@@ -261,14 +263,21 @@ local function info(w, h)
     local image = mp.get_property_native("current-tracks/video/image", true)
     local albumart = image and mp.get_property_native("current-tracks/video/albumart", false)
     local short_video = mp.get_property_native("duration", 0) <= options.min_duration
-    disabled = not (w and h) or
+    disabled = (w or 0) == 0 or (h or 0) == 0 or
         has_vid == 0 or
         (network and not options.network) or
         (albumart and not options.audio) or
         (image and not albumart) or
         (short_video and options.min_duration > 0)
 
-    local json, err = mp.utils.format_json({width=display_w, height=display_h, disabled=disabled, socket=options.socket, tnpath=options.tnpath, overlay_id=options.overlay_id})
+    if info_timer then
+        info_timer:kill()
+        info_timer = nil
+    elseif has_vid == 0 or not disabled then
+        info_timer = mp.add_timeout(0.05, function() info(w, h) end)
+    end
+
+    local json, err = mp.utils.format_json({width=display_w, height=display_h, disabled=disabled, available=true, socket=options.socket, tnpath=options.tnpath, overlay_id=options.overlay_id})
     mp.commandv("script-message", "thumbfast-info", json)
 end
 
@@ -574,7 +583,12 @@ end
 local function file_load()
     clear()
     real_w, real_h = nil, nil
+    last_real_w, last_real_h = nil, nil
     last_seek_time = nil
+    if info_timer then
+        info_timer:kill()
+        info_timer = nil
+    end
 
     calc_dimensions()
     info(effective_w, effective_h)
