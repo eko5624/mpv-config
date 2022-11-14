@@ -6,7 +6,7 @@ DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd $DIR/portable_config
 git clone https://github.com/hooke007/MPV_lazy.git --branch main
 
-rm -rf $DIR/portable_config/scripts/uosc
+rm -rf scripts/uosc
 cp -f MPV_lazy/portable_config/scripts/input_plus.lua scripts
 cp -f MPV_lazy/portable_config/scripts/load_plus.lua scripts
 cp -f MPV_lazy/portable_config/scripts/playlistmanager.lua scripts
@@ -24,9 +24,7 @@ cp -f MPV_lazy/portable_config/script-opts/thumbfast.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
 
-rm -rf $DIR/portable_config/fonts
-rm -rf $DIR/portable_config/luts
-rm -rf $DIR/portable_config/vs
+rm -rf fonts luts vs
 cp -r MPV_lazy/portable_config/fonts ./
 cp -r MPV_lazy/portable_config/luts ./
 cp -r MPV_lazy/portable_config/vs ./
