@@ -22,7 +22,7 @@ cp -f MPV_lazy/portable_config/script-opts/stats.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/thumbfast.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
-cp -f MPV_lazy/portable_config/fonts ./
+cp -rf MPV_lazy/portable_config/fonts ./
 
 rm -rf MPV_lazy
 
