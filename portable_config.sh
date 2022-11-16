@@ -18,7 +18,7 @@ cp -r MPV_lazy/portable_config/scripts/uosc scripts
 sed -i 's/text_width_estimation = true/text_width_estimation = false/' scripts/uosc/main.lua
 
 # Change to 4× speed play.
-sed -i 's/"speed", 2/"speed", 4/' scripts/uosc/input_plus.lua
+sed -i 's/"speed", 2/"speed", 4/' scripts/input_plus.lua
 
 cp -f MPV_lazy/portable_config/script-opts/console.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/load_plus.conf script-opts
