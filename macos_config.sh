@@ -13,6 +13,9 @@ cp -f MPV_lazy/portable_config/scripts/save_global_props.lua scripts
 cp -f MPV_lazy/portable_config/scripts/thumbfast.lua scripts
 cp -r MPV_lazy/portable_config/scripts/uosc scripts
 
+# Change to 4× speed play.
+sed -i 's/"speed", 2/"speed", 4/' scripts/input_plus.lua
+
 rm -rf fonts
 cp -f MPV_lazy/portable_config/script-opts/console.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/osc.conf script-opts
