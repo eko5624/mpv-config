@@ -418,7 +418,7 @@ end
 local bak_speed = nil
 function speed_auto(tab)
 	if tab.event == "down" then
-		mp.set_property_number("speed", 2)
+		mp.set_property_number("speed", 4)
 		mp.msg.verbose("speed_auto 加速播放中")
 	elseif tab.event == "up" then
 		mp.set_property_number("speed", 1)
