@@ -24,6 +24,9 @@ cp -f MPV_lazy/portable_config/script-opts/thumbfast.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
 
+# A temporary workaround for some submenus of uosc text not being rendering.
+sed -i 's/text_width_estimation = true/text_width_estimation = false/' scripts/uosc/main.lua
+
 rm -rf fonts luts vs
 cp -r MPV_lazy/portable_config/fonts ./
 cp -r MPV_lazy/portable_config/luts ./
