@@ -17,7 +17,7 @@ cp -r MPV_lazy/portable_config/scripts/uosc scripts
 sed -i 's/"speed", 2/"speed", 4/' scripts/input_plus.lua
 
 # Change stats icon from info to analytics.
-sed -i 's/command:info/command:analytics/' scripts/uosc/elements/Controls.lua
+sed -i 's/command:info_outline/command:analytics/' scripts/uosc/elements/Controls.lua
 
 rm -rf fonts
 cp -f MPV_lazy/portable_config/script-opts/console.conf script-opts
