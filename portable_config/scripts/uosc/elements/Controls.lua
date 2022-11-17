@@ -22,7 +22,7 @@ function Controls:init()
 	-- Serialize control elements
 	local shorthands = {
 		menu = 'command:menu:script-binding uosc/menu-blurred?菜单',
-		['script-stats'] = 'command:info_outline:script-binding stats/display-stats-toggle?统计数据',
+		['script-stats'] = 'command:analytics_outline:script-binding stats/display-stats-toggle?统计数据',
 		['play_pause'] = 'cycle:not_started:pause:no=play_circle/yes=pause_circle?播放/暂停',
 		subtitles = 'command:subtitles:script-binding uosc/subtitles#sub>0?字幕轨',
 		audio = 'command:graphic_eq:script-binding uosc/audio#audio>1?音频轨',
