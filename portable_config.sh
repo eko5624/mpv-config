@@ -14,7 +14,7 @@ cp -f MPV_lazy/portable_config/scripts/save_global_props.lua scripts
 cp -f MPV_lazy/portable_config/scripts/thumbfast.lua scripts
 cp -r MPV_lazy/portable_config/scripts/uosc scripts
 
-# A temporary workaround for some submenus of uosc text not being rendering.
+# A temporary workaround for some submenus text of uosc  not being rendering.
 sed -i 's/text_width_estimation = true/text_width_estimation = false/' scripts/uosc/main.lua
 
 # Change to 4× speed play.
@@ -32,6 +32,9 @@ cp -f MPV_lazy/portable_config/script-opts/stats.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/thumbfast.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
+
+# Don't dim screen when triggering menu.
+sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 
 rm -rf fonts luts vs
 cp -r MPV_lazy/portable_config/fonts ./
