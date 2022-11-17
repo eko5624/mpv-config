@@ -21,7 +21,7 @@ sed -i 's/text_width_estimation = true/text_width_estimation = false/' scripts/u
 sed -i 's/"speed", 2/"speed", 4/' scripts/input_plus.lua
 
 # Change stats icon from info to analytics.
-sed -i 's/command:info/command:analytics/' scripts/uosc/elements/Controls.lua
+sed -i 's/command:info_outline/command:analytics/' scripts/uosc/elements/Controls.lua
 
 cp -f MPV_lazy/portable_config/script-opts/console.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/load_plus.conf script-opts
