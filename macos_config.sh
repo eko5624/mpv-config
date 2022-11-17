@@ -30,6 +30,9 @@ cp -f MPV_lazy/portable_config/script-opts/uosc.conf script-opts
 cp -f MPV_lazy/portable_config/script-opts/ytdl_hook.conf script-opts
 cp -r MPV_lazy/portable_config/fonts ./
 
+# Don't dim screen when triggering menu.
+sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
+
 rm -rf MPV_lazy
 
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
