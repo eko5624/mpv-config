@@ -16,9 +16,14 @@ cp -r MPV_lazy/portable_config/scripts/uosc scripts
 # Change to 4× speed play.
 sed -i 's/"speed", 2/"speed", 4/' scripts/input_plus.lua
 
-# Change 'stats' icon from 'info' to 'analytics', 'play/pause' icon from 'play_circle/pause_circle' to 'play_arrow/pause'.  
+# Change 'stats' icon from 'info_outline' to 'analytics'.  
 sed -i 's/command:info_outline/command:analytics/' scripts/uosc/elements/Controls.lua
+
+# Change 'play/pause' icon from 'play_circle/pause_circle' to 'play_arrow/pause'.
 sed -i 's/cycle:not_started:pause:no=play_circle\/yes=pause_circle/cycle:play_arrow:pause:no=pause\/yes=play_arrow/' scripts/uosc/elements/Controls.lua
+
+# Change 'open file' icon from 'file_open' to 'folder'.
+sed -i 's/command:file_open/command:folder/' scripts/uosc/elements/Controls.lua
 
 rm -rf fonts
 cp -f MPV_lazy/portable_config/script-opts/console.conf script-opts
