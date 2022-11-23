@@ -26,7 +26,7 @@ cp -rf uosc/scripts/* scripts
 cp -f uosc/script-opts/uosc.conf script-opts
 rm -rf uosc
 
-# Don't dim screen when triggering menu.
+# Don't dim screen when menu triggered.
 sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 
 # Add 'stats' 'open file' 'prev/next chapter' 'chapter' buttons.
@@ -55,7 +55,7 @@ sed -i 's/?Loop file/?单曲循环/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Shuffle/?乱序播放/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Fullscreen/?切换全屏/' scripts/uosc_shared/elements/Controls.lua
 
-# Change 'file open' button from 'file_open' to 'folder'.
+# Change 'open file' button from 'file_open' to 'folder'.
 sed -i 's/command:file_open/command:folder/' scripts/uosc_shared/elements/Controls.lua
 
 
