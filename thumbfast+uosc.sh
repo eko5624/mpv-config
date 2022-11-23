@@ -30,7 +30,7 @@ rm -rf uosc
 sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 
 # Add 'prev/next chapter' button and 'open-file' button.
-sed -i 's/gap,subtitles,<has_many_audio>audio,<has_many_video>video/script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,gap,subtitles,audio,<has_many_video>video,<has_chapter>chapters/' script-opts/uosc.conf
+sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
 
 sed -i "/subtitles =/i \t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放/暂停'," scripts/uosc_shared/elements/Controls.lua
 sed -i "/subtitles =/a \t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc_shared/elements/Controls.lua
