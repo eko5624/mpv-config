@@ -44,7 +44,7 @@ sed -i 's/?Chapters/?章节/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Editions/?版本/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Stream quality/?流品质/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Open file/?加载文件/' scripts/uosc_shared/elements/Controls.lua
-sed -i 's/?Playlist\/Files/?播放列表\/文件浏览器' scripts/uosc_shared/elements/Controls.lua
+sed -i 's/?Playlist\/Files/?播放列表\/文件浏览器/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Previous/?上一个/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Next/?下一个/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?First/?首位/' scripts/uosc_shared/elements/Controls.lua
