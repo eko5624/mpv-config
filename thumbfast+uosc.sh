@@ -29,9 +29,10 @@ rm -rf uosc
 # Don't dim screen when triggering menu.
 sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 
-# Add 'prev/next chapter' button and 'open-file' button.
+# Add 'stats' 'open file' 'prev/next chapter' 'chapter' buttons.
 sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
 
+# Add simplified chinese translation.
 sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放/暂停'," scripts/uosc_shared/elements/Controls.lua
 sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Menu/?菜单/' scripts/uosc_shared/elements/Controls.lua
@@ -53,6 +54,9 @@ sed -i 's/?Loop playlist/?列表循环/' scripts/uosc_shared/elements/Controls.l
 sed -i 's/?Loop file/?单曲循环/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Shuffle/?乱序播放/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Fullscreen/?切换全屏/' scripts/uosc_shared/elements/Controls.lua
+
+# Change 'file open' button from 'file_open' to 'folder'.
+sed -i 's/command:file_open/command:folder/' scripts/uosc_shared/elements/Controls.lua
 
 
 
