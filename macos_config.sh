@@ -42,7 +42,10 @@ sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 # Add 'prev/next chapter' button and 'open-file' button.
 sed -i 's/gap,play_pause,gap/open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,gap/' script-opts/uosc.conf
 
-#Change thumb size from 300px to 360px
+# Change UI scale from 1 to 2.
+sed -i 's/ui_scale=1/ui_scale=2/' script-opts/uosc.conf
+
+# Change thumb size from 300px to 360px
 sed -i 's/max_height=300/max_height=360/' script-opts/thumbfast.conf
 sed -i 's/max_width=300/max_width=360/' script-opts/thumbfast.conf
 
