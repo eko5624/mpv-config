@@ -334,7 +334,7 @@ state = {
 	margin_bottom = 0,
 	hidpi_scale = 1,
 }
-thumbnail = {width = 0, height = 0, disabled = false}
+thumbnail = {width = 0, height = 0, disabled = false, pause = false}
 external = {} -- Properties set by external scripts
 Elements = require('elements/Elements')
 Menu = require('elements/Menu')

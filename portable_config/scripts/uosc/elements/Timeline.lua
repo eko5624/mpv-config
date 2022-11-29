@@ -99,7 +99,7 @@ function Timeline:on_prop_fullormaxed() self:update_dimensions() end
 function Timeline:on_display() self:update_dimensions() end
 function Timeline:on_mouse_leave() self:clear_thumbnail() end
 function Timeline:on_global_mbtn_left_up()
-	if thumbnail.disabled then thumbnail.disabled = false end
+	if thumbnail.pause then thumbnail.pause = false end
 	if self.pressed then
 		mp.set_property_native('pause', self.pressed_pause)
 		self.pressed = false
@@ -115,7 +115,7 @@ Timeline.seek_timer = mp.add_timeout(0.05, function() Elements.timeline:set_from
 Timeline.seek_timer:kill()
 function Timeline:on_global_mouse_move()
 	if self.pressed then
-		thumbnail.disabled = true
+		thumbnail.pause = true
 		self:clear_thumbnail()
 		if self.width / state.duration < 10 then
 			self:set_from_cursor(true)
@@ -312,7 +312,7 @@ function Timeline:render()
 		tooltip_anchor.ay = tooltip_anchor.ay - self.font_size - 4
 
 		-- Thumbnail
-		if not thumbnail.disabled and thumbnail.width ~= 0 and thumbnail.height ~= 0 then
+		if not thumbnail.disabled and thumbnail.width ~= 0 and thumbnail.height ~= 0 and not thumbnail.pause then
 			local scale_x, scale_y = display.scale_x, display.scale_y
 			local border, margin_x, margin_y = math.ceil(2 * scale_x), round(10 * scale_x), round(5 * scale_y)
 			local thumb_x_margin, thumb_y_margin = border + margin_x, border + margin_y

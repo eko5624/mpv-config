@@ -369,9 +369,9 @@ function quit_real()
 	if pre_quit then
 		mp.command("quit")
 	else
-		mp.osd_message("再次执行以确认退出", 1)
+		mp.osd_message("再次执行以确认退出", 1.5)
 		pre_quit = true
-		mp.add_timeout(1, function()
+		mp.add_timeout(1.5, function()
 			pre_quit = false
 			mp.msg.verbose("quit_real 检测到误触退出键")
 		end)
