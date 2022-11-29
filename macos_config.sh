@@ -48,7 +48,12 @@ sed -i 's/max_width=300/max_width=360/' script-opts/thumbfast.conf
 
 rm -rf MPV_lazy
 
+# Get SmartCopyPaste_II.lua
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
 mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
+
+# Get autoload.lua
+curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
+mv -f ./autoload.lua scripts
