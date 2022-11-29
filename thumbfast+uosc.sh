@@ -58,6 +58,23 @@ sed -i 's/?Fullscreen/?切换全屏/' scripts/uosc_shared/elements/Controls.lua
 # Change 'open file' button from 'file_open' to 'folder'.
 sed -i 's/command:file_open/command:folder/' scripts/uosc_shared/elements/Controls.lua
 
+# Get SmartCopyPaste_II.lua
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
+mv -f ./SmartCopyPaste_II.lua scripts
+mv -f ./SmartCopyPaste_II.conf script-opts
+
+# Get autoload.lua
+curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
+mv -f ./autoload.lua scripts
+
+# Get mpv-playlistmanager
+curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.lua
+curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
+mv -f ./playlistmanager.lua scripts
+mv -f ./playlistmanager.conf script-opts
+
+
 
 
 
