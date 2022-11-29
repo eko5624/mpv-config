@@ -3,6 +3,9 @@ set -x
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+rm -rf $DIR/portable_config
+mkdir -p $DIR/portable_config/script
+mkdir -p $DIR/portable_config/script-opts
 cd $DIR/portable_config
 git clone https://github.com/hooke007/MPV_lazy.git --branch main
 
@@ -49,7 +52,6 @@ sed -i 's/gap,play_pause,gap/open-file,gap,<has_chapter>command:skip_previous:ad
 sed -i 's/max_height=300/max_height=360/' script-opts/thumbfast.conf
 sed -i 's/max_width=300/max_width=360/' script-opts/thumbfast.conf
 
-rm -rf fonts luts vs
 cp -r MPV_lazy/portable_config/fonts ./
 cp -r MPV_lazy/portable_config/luts ./
 cp -r MPV_lazy/portable_config/vs ./
