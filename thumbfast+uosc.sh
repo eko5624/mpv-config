@@ -40,6 +40,7 @@ sed -i 's/?Menu/?菜单/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Subtitles/?字幕轨/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Audio/?音频轨/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Audio device/?音频设备/' scripts/uosc_shared/elements/Controls.lua
+sed -i 's/音频轨 device/音频设备/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Video/?视频轨/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Playlist/?播放列表/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Chapters/?章节/' scripts/uosc_shared/elements/Controls.lua
@@ -47,6 +48,7 @@ sed -i 's/?Editions/?版本/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Stream quality/?流品质/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Open file/?加载文件/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Playlist\/Files/?播放列表\/文件浏览器/' scripts/uosc_shared/elements/Controls.lua
+sed -i 's/播放列表\/Files/播放列表\/文件浏览器/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Previous/?上一个/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Next/?下一个/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?First/?首位/' scripts/uosc_shared/elements/Controls.lua
