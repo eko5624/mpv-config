@@ -3,13 +3,17 @@ set -x
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-rm -rf $DIR/portable_config
-mkdir -p $DIR/portable_config/script
+rm -rf $DIR/portable_config/fonts
+rm -rf $DIR/portable_config/luts
+rm -rf $DIR/portable_config/script-opts
+rm -rf $DIR/portable_config/scripts
+rm -rf $DIR/portable_config/vs
 mkdir -p $DIR/portable_config/script-opts
+mkdir -p $DIR/portable_config/scripts
+
 cd $DIR/portable_config
 git clone https://github.com/hooke007/MPV_lazy.git --branch main
 
-rm -rf scripts/uosc
 cp -f MPV_lazy/portable_config/scripts/input_plus.lua scripts
 cp -f MPV_lazy/portable_config/scripts/load_plus.lua scripts
 cp -f MPV_lazy/portable_config/scripts/playlistmanager.lua scripts
