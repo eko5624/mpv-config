@@ -3,8 +3,9 @@ set -x
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-rm -rf $DIR/thumbfast+uosc/scripts && mkdir -p $DIR/thumbfast+uosc/scripts
-rm -rf $DIR/thumbfast+uosc/scripts-opts && mkdir -p $DIR/thumbfast+uosc/script-opts
+rm -rf $DIR/thumbfast+uosc
+mkdir -p $DIR/thumbfast+uosc/scripts
+mkdir -p $DIR/thumbfast+uosc/script-opts
 
 cd $DIR/thumbfast+uosc
 
