@@ -34,14 +34,14 @@ sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
 
 # Add simplified chinese translation.
-sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放/暂停'," scripts/uosc_shared/elements/Controls.lua
+sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc_shared/elements/Controls.lua
 sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Menu/?菜单/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Subtitles/?字幕轨/' scripts/uosc_shared/elements/Controls.lua
-sed -i 's#?Audio\',#?音频轨\',#' scripts/uosc_shared/elements/Controls.lua
+sed -i "s/?Audio',/?音频轨',/" scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Audio device/?音频设备/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Video/?视频轨/' scripts/uosc_shared/elements/Controls.lua
-sed -i 's#?Playlist\',#?播放列表\',#' scripts/uosc_shared/elements/Controls.lua
+sed -i "s/?Playlist',/?播放列表',/" scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Chapters/?章节/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Editions/?版本/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Stream quality/?流品质/' scripts/uosc_shared/elements/Controls.lua
