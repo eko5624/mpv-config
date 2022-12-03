@@ -15,9 +15,11 @@ cp -f thumbfast/thumbfast.lua scripts
 cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
 
-#Change thumb size from 200px to 360px
-sed -i 's/max_height=200/max_height=360/' script-opts/thumbfast.conf
-sed -i 's/max_width=200/max_width=360/' script-opts/thumbfast.conf
+#Change thumb size from 200px to 450px
+sed -i 's/max_height=200/max_height=450/' script-opts/thumbfast.conf
+sed -i 's/max_width=200/max_width=450/' script-opts/thumbfast.conf
+sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
+sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
 # get uosc
 git clone https://github.com/tomasklaen/uosc.git --branch main
@@ -74,8 +76,3 @@ curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/pla
 curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
 mv -f ./playlistmanager.lua scripts
 mv -f ./playlistmanager.conf script-opts
-
-
-
-
-
