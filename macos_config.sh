@@ -60,6 +60,10 @@ curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/
 mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
 
+sed -i 's/🕒/⧗/' script-opts/SmartCopyPaste_II.conf
+sed -i 's/📋/✂︎/' script-opts/SmartCopyPaste_II.conf
+
+
 # Get autoload.lua
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
