@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 rm -rf $DIR/macos_config/fonts
