@@ -67,6 +67,15 @@ curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/
 mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
 
+# Get InputEvent.lua
+curl -O https://raw.githubusercontent.com/zhongfly/InputEvent/property-expansion/inputevent.lua
+curl -O https://raw.githubusercontent.com/zhongfly/InputEvent/property-expansion/script-opts/inputevent.conf
+curl -O https://raw.githubusercontent.com/zhongfly/InputEvent/property-expansion/script-opts/inputevent_key.conf
+mv -f ./inputevent.lua scripts
+mv -f ./inputevent.conf script-opts
+mv -f ./inputevent_key.conf script-opts
+
+
 # Get autoload.lua
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
