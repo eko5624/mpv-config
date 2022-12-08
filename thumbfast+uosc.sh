@@ -17,8 +17,8 @@ cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
 
 #Change thumb size from 200px to 450px
-sed -i 's/max_height=200/max_height=450/' script-opts/thumbfast.conf
-sed -i 's/max_width=200/max_width=450/' script-opts/thumbfast.conf
+sed -i 's/max_height=200/max_height=360/' script-opts/thumbfast.conf
+sed -i 's/max_width=200/max_width=360/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
@@ -69,7 +69,7 @@ mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
 
 # Get InputEvent.lua
-curl -O https://raw.githubusercontent.com/zhongfly/InputEvent/property-expansion/inputevent.lua
+curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
 mv -f ./inputevent.lua scripts
 
 # Get autoload.lua
