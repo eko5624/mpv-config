@@ -81,3 +81,7 @@ curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/pla
 curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
 mv -f ./playlistmanager.lua scripts
 mv -f ./playlistmanager.conf script-opts
+
+#Get stats conf
+curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
+mv -f ./stats.conf script-opts
