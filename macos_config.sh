@@ -82,10 +82,10 @@ curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/pla
 mv -f ./playlistmanager.lua scripts
 mv -f ./playlistmanager.conf script-opts
 
-#Get stats conf
+# Get stats.conf
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
 mv -f ./stats.conf script-opts
 
-#Get ytdl_hook.conf
+# Get ytdl_hook.conf
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/ytdl_hook.conf
 mv -f ./ytdl_hook.conf script-opts
