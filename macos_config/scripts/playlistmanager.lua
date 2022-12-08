@@ -1,13 +1,3 @@
---[[
-SOURCE_ https://github.com/jonniek/mpv-playlistmanager/blob/master/playlistmanager.lua
-COMMIT_ 1a9d250a7d7c7d49a8d0aaa6c4261a50ab74773c
-
-高级播放列表，用于替换内置的过于简洁的列表
-自定义快捷键方案示例，在 input.conf 中另起一行：
-SHIFT+ENTER  script-binding  playlistmanager/showplaylist
-列表中的操作为动态绑定，编辑 playlistmanager.conf 修改预设键位
-]]--
-
 local settings = {
 
   -- #### FUNCTIONALITY SETTINGS
@@ -16,7 +6,12 @@ local settings = {
   --if "no" then you can display the playlist by any of the navigation keys
   dynamic_binds = true,
 
-  -- dynamic keys - to bind multiple keys separate them by a space
+  -- to bind multiple keys separate them by a space
+
+  -- main key
+  key_showplaylist = "SHIFT+ENTER",
+
+  -- dynamic keys
   key_moveup = "UP",
   key_movedown = "DOWN",
   key_movepageup = "PGUP",
@@ -28,6 +23,13 @@ local settings = {
   key_playfile = "ENTER",
   key_removefile = "BS",
   key_closeplaylist = "ESC",
+
+  -- extra functionality keys
+  key_sortplaylist = "",
+  key_shuffleplaylist = "",
+  key_reverseplaylist = "",
+  key_loadfiles = "",
+  key_saveplaylist = "",
 
   --replaces matches on filenames based on extension, put as empty string to not replace anything
   --replace rules are executed in provided order
@@ -68,7 +70,9 @@ local settings = {
   --json array of filetypes to search from directory
   loadfiles_filetypes = [[
     [
-      "mkv", "avi", "mp4", "webm", "rmvb", "flv", "wmv", "mpeg",
+      "jpg", "jpeg", "png", "tif", "tiff", "gif", "webp", "svg", "bmp",
+      "mp3", "wav", "ogm", "flac", "m4a", "wma", "ogg", "opus",
+      "mkv", "avi", "mp4", "ogv", "webm", "rmvb", "flv", "wmv", "mpeg", "mpg", "m4v", "3gp"
     ]
   ]],
 
@@ -116,7 +120,7 @@ local settings = {
   loop_cursor = true,
 
   --youtube-dl executable for title resolving if enabled, probably "youtube-dl" or "yt-dlp", can be absolute path
-  youtube_dl_executable = "yt-dlp",
+  youtube_dl_executable = "youtube-dl",
 
 
   --####  VISUAL SETTINGS
@@ -131,10 +135,10 @@ local settings = {
   resolve_title_timeout = 15,
 
   --osd timeout on inactivity, with high value on this open_toggles is good to be true
-  playlist_display_timeout = 4,
+  playlist_display_timeout = 5,
 
   --amount of entries to show before slicing. Optimal value depends on font/video size etc.
-  showamount = 15,
+  showamount = 16,
 
   --font size scales by window, if false requires larger font and padding sizes
   scale_playlist_by_window=true,
@@ -143,10 +147,10 @@ local settings = {
   --read http://docs.aegisub.org/3.2/ASS_Tags/ for reference of tags
   --undeclared tags will use default osd settings
   --these styles will be used for the whole playlist
-  style_ass_tags = "{\\rDefault\\an7\\fs12\\b0\\blur0\\bord1\\1c&H996F9A\\3c&H000000}",
+  style_ass_tags = "{}",
   --paddings from top left corner
   text_padding_x = 10,
-  text_padding_y = 10,
+  text_padding_y = 30,
 
   --set title of window with stripped name
   set_title_stripped = false,
@@ -154,7 +158,7 @@ local settings = {
   title_suffix = " - mpv",
 
   --slice long filenames, and how many chars to show
-  slice_longfilenames = true,
+  slice_longfilenames = false,
   slice_longfilenames_amount = 70,
 
   --Playlist header template
@@ -163,7 +167,7 @@ local settings = {
   --%cursor = position of navigation
   --%plen = playlist length
   --%N = newline
-  playlist_header = "播放列表 [%cursor/%plen]",
+  playlist_header = "[%cursor/%plen]",
 
   --Playlist file templates
   --%pos = position of file with leading zeros
@@ -172,17 +176,17 @@ local settings = {
   --you can also use the ass tags mentioned above. For example:
   --  selected_file="{\\c&HFF00FF&}➔ %name"   | to add a color for selected file. However, if you
   --  use ass tags you need to reset them for every line (see https://github.com/jonniek/mpv-playlistmanager/issues/20)
-  normal_file = "{\\c&HFFFFFF&}□ %name",
-  hovered_file = "{\\c&H33FFFF&}■ %name",
-  selected_file = "{\\c&C1C1FF&}☑ %name",
-  playing_file = "{\\c&HAAAAAA&}▷ %name",
-  playing_hovered_file = "{\\c&H00FF00&}▶ %name",
-  playing_selected_file = "{\\c&C1C1FF&}☑ %name",
+  normal_file = "○ %name",
+  hovered_file = "● %name",
+  selected_file = "➔ %name",
+  playing_file = "▷ %name",
+  playing_hovered_file = "▶ %name",
+  playing_selected_file = "➤ %name",
 
 
   -- what to show when playlist is truncated
-  playlist_sliced_prefix = "▲",
-  playlist_sliced_suffix = "▼",
+  playlist_sliced_prefix = "...",
+  playlist_sliced_suffix = "...",
 
   --output visual feedback to OSD for tasks
   display_osd_feedback = true,
@@ -191,7 +195,7 @@ local settings = {
   reset_cursor_on_close = true,
 }
 local opts = require("mp.options")
-opts.read_options(settings, nil, function(list) update_opts(list) end)
+opts.read_options(settings, "playlistmanager", function(list) update_opts(list) end)
 
 local utils = require("mp.utils")
 local msg = require("mp.msg")
@@ -266,11 +270,6 @@ update_opts({filename_replace = true, loadfiles_filetypes = true})
 function on_loaded()
   filename = mp.get_property("filename")
   path = mp.get_property('path')
-  local ext = filename:match("%.(.+)$")
-  if not ext or not filetype_lookup[ext:lower()] then
-    -- a directory or playlist has been loaded, let's not do anything as mpv will expand it into files
-    return
-  end
   --if not a url then join path with working directory
   if not path:match("^%a%a+:%/%/") then
     path = utils.join_path(mp.get_property('working-directory'), path)
@@ -303,9 +302,13 @@ function on_loaded()
 
   local didload = false
   if settings.loadfiles_on_start and plen == 1 then
-    didload = true --save reference for sorting
-    msg.info("Loading files from playing files directory")
-    playlist()
+    local ext = filename:match("%.([^%.]+)$")
+    -- a directory or playlist has been loaded, let's not do anything as mpv will expand it into files
+    if ext and filetype_lookup[ext:lower()] then
+      didload = true --save reference for sorting
+      msg.info("Loading files from playing files directory")
+      playlist()
+    end
   end
 
   --if we promised to sort files on launch do it
@@ -345,7 +348,7 @@ end
 --strip a filename based on its extension or protocol according to rules in settings
 function stripfilename(pathfile, media_title)
   if pathfile == nil then return '' end
-  local ext = pathfile:match("^.+%.(.+)$")
+  local ext = pathfile:match("%.([^%.]+)$")
   local protocol = pathfile:match("^(%a%a+)://")
   if not ext then ext = "" end
   local tmp = pathfile
@@ -494,14 +497,18 @@ function draw_playlist()
   mp.set_osd_ass(w, h, ass.text)
 end
 
-function toggle_playlist()
+function toggle_playlist(show_function)
   if settings.open_toggles then
     if playlist_visible then
       remove_keybinds()
       return
     end
   end
-  showplaylist()
+  if show_function then
+    show_function()
+  else
+    showplaylist()
+  end
 end
 
 function showplaylist(duration)
@@ -510,6 +517,19 @@ function showplaylist(duration)
   playlist_visible = true
   add_keybinds()
 
+  draw_playlist()
+  keybindstimer:kill()
+  if duration then
+    keybindstimer = mp.add_periodic_timer(duration, remove_keybinds)
+  else
+    keybindstimer:resume()
+  end
+end
+
+function showplaylist_non_interactive(duration)
+  refresh_globals()
+  if plen == 0 then return end
+  playlist_visible = true
   draw_playlist()
   keybindstimer:kill()
   if duration then
@@ -685,7 +705,7 @@ function parse_files(res, delimiter)
   if not res.error and res.status == 0 then
     local valid_files = {}
     for line in res.stdout:gmatch("[^"..delimiter.."]+") do
-      local ext = line:match("^.+%.(.+)$")
+      local ext = line:match("%.([^%.]+)$")
       if ext and filetype_lookup[ext:lower()] then
         table.insert(valid_files, line)
       end
@@ -952,6 +972,19 @@ end
 
 function bind_keys(keys, name, func, opts)
   if keys == nil or keys == "" then
+    mp.add_key_binding(keys, name, func, opts)
+    return
+  end
+  local i = 1
+  for key in keys:gmatch("[^%s]+") do
+    local prefix = i == 1 and '' or i
+    mp.add_key_binding(key, name..prefix, func, opts)
+    i = i + 1
+  end
+end
+
+function bind_keys_forced(keys, name, func, opts)
+  if keys == nil or keys == "" then
     mp.add_forced_key_binding(keys, name, func, opts)
     return
   end
@@ -977,17 +1010,17 @@ function unbind_keys(keys, name)
 end
 
 function add_keybinds()
-  bind_keys(settings.key_moveup, 'moveup', moveup, "repeatable")
-  bind_keys(settings.key_movedown, 'movedown', movedown, "repeatable")
-  bind_keys(settings.key_movepageup, 'movepageup', movepageup, "repeatable")
-  bind_keys(settings.key_movepagedown, 'movepagedown', movepagedown, "repeatable")
-  bind_keys(settings.key_movebegin, 'movebegin', movebegin, "repeatable")
-  bind_keys(settings.key_moveend, 'moveend', moveend, "repeatable")
-  bind_keys(settings.key_selectfile, 'selectfile', selectfile)
-  bind_keys(settings.key_unselectfile, 'unselectfile', unselectfile)
-  bind_keys(settings.key_playfile, 'playfile', playfile)
-  bind_keys(settings.key_removefile, 'removefile', removefile, "repeatable")
-  bind_keys(settings.key_closeplaylist, 'closeplaylist', remove_keybinds)
+  bind_keys_forced(settings.key_moveup, 'moveup', moveup, "repeatable")
+  bind_keys_forced(settings.key_movedown, 'movedown', movedown, "repeatable")
+  bind_keys_forced(settings.key_movepageup, 'movepageup', movepageup, "repeatable")
+  bind_keys_forced(settings.key_movepagedown, 'movepagedown', movepagedown, "repeatable")
+  bind_keys_forced(settings.key_movebegin, 'movebegin', movebegin, "repeatable")
+  bind_keys_forced(settings.key_moveend, 'moveend', moveend, "repeatable")
+  bind_keys_forced(settings.key_selectfile, 'selectfile', selectfile)
+  bind_keys_forced(settings.key_unselectfile, 'unselectfile', unselectfile)
+  bind_keys_forced(settings.key_playfile, 'playfile', playfile)
+  bind_keys_forced(settings.key_removefile, 'removefile', removefile, "repeatable")
+  bind_keys_forced(settings.key_closeplaylist, 'closeplaylist', remove_keybinds)
 end
 
 function remove_keybinds()
@@ -1107,7 +1140,16 @@ function handlemessage(msg, value, value2)
       showplaylist(value2)
       return
     else
-      toggle_playlist()
+      toggle_playlist(showplaylist)
+      return
+    end
+  end
+  if msg == "show" and value == "playlist-nokeys" then
+    if value2 ~= "toggle" then
+      showplaylist_non_interactive(value2)
+      return
+    else
+      toggle_playlist(showplaylist_non_interactive)
       return
     end
   end
@@ -1129,12 +1171,12 @@ end
 
 mp.register_script_message("playlistmanager", handlemessage)
 
+bind_keys(settings.key_sortplaylist, "sortplaylist", sortplaylist)
+bind_keys(settings.key_shuffleplaylist, "shuffleplaylist", shuffleplaylist)
+bind_keys(settings.key_reverseplaylist, "reverseplaylist", reverseplaylist)
+bind_keys(settings.key_loadfiles, "loadfiles", playlist)
+bind_keys(settings.key_saveplaylist, "saveplaylist", activate_playlist_save)
+bind_keys(settings.key_showplaylist, "showplaylist", toggle_playlist)
+
 mp.register_event("start-file", on_loaded)
 mp.register_event("end-file", on_closed)
-
-mp.add_key_binding(nil,  "loadfiles",        playlist)
-mp.add_key_binding(nil,  "sortplaylist",     sortplaylist)
-mp.add_key_binding(nil,  "saveplaylist",     activate_playlist_save)
-mp.add_key_binding(nil,  "showplaylist",     toggle_playlist)
-mp.add_key_binding(nil,  "shuffleplaylist",  shuffleplaylist)
-mp.add_key_binding(nil,  "reverseplaylist",  reverseplaylist)
