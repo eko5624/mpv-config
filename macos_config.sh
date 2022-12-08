@@ -33,6 +33,7 @@ sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 
 # Add 'stats' 'open file' 'prev/next chapter' 'chapter' buttons.
 sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
+sed -i 's/<has_many_audio>audio/audio/' script-opts/uosc.conf
 
 # Add simplified chinese translation.
 sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc_shared/elements/Controls.lua
