@@ -59,9 +59,6 @@ sed -i 's/?Loop file/?单曲循环/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Shuffle/?乱序播放/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Fullscreen/?切换全屏/' scripts/uosc_shared/elements/Controls.lua
 
-# Change 'open file' button from 'file_open' to 'folder'.
-sed -i 's/command:file_open/command:folder/' scripts/uosc_shared/elements/Controls.lua
-
 # Get SmartCopyPaste_II.lua
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
