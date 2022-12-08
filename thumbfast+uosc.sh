@@ -16,7 +16,7 @@ cp -f thumbfast/thumbfast.lua scripts
 cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
 
-#Change thumb size from 200px to 450px
+#Change thumb size from 200px to 360px
 sed -i 's/max_height=200/max_height=360/' script-opts/thumbfast.conf
 sed -i 's/max_width=200/max_width=360/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
