@@ -70,7 +70,7 @@ mv -f ./SmartCopyPaste_II.conf script-opts
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SimpleHistory.lua
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SimpleHistory.conf
 mv -f ./SimpleHistory.lua scripts
-mv -f ./SimpleHistory.conf SimpleHistory.conf
+mv -f ./SimpleHistory.conf script-opts
 
 # Get InputEvent
 curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
