@@ -60,17 +60,23 @@ sed -i 's/?Loop file/?单曲循环/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Shuffle/?乱序播放/' scripts/uosc_shared/elements/Controls.lua
 sed -i 's/?Fullscreen/?切换全屏/' scripts/uosc_shared/elements/Controls.lua
 
-# Get SmartCopyPaste_II.lua
+# Get SmartCopyPaste_II
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
 mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
 
-# Get InputEvent.lua
+#Get SimpleHistory
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SimpleHistory.lua
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SimpleHistory.conf
+mv -f ./SimpleHistory.lua scripts
+mv -f ./SimpleHistory.conf SimpleHistory.conf
+
+# Get InputEvent
 curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
 mv -f ./inputevent.lua scripts
 
-# Get autoload.lua
+# Get Autoload
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
 
