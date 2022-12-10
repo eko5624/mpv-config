@@ -66,12 +66,6 @@ curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/
 mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
 
-# Get SimpleHistory
-curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SimpleHistory.lua
-curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SimpleHistory.conf
-mv -f ./SimpleHistory.lua scripts
-mv -f ./SimpleHistory.conf script-opts
-
 # Get InputEvent
 curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
 mv -f ./inputevent.lua scripts
