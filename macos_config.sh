@@ -28,7 +28,7 @@ cp -rf uosc/scripts/* scripts
 cp -f uosc/script-opts/uosc.conf script-opts
 rm -rf uosc
 
-# Don't show timeline when paused.
+# Enable autoload.
 sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
 
 # Don't dim screen when menu triggered.
