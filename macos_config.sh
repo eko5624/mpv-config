@@ -15,9 +15,9 @@ cp -f thumbfast/thumbfast.lua scripts
 cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
 
-#Change thumb size from 200px to 720px
-sed -i 's/max_height=200/max_height=720/' script-opts/thumbfast.conf
-sed -i 's/max_width=200/max_width=720/' script-opts/thumbfast.conf
+#Change thumb size from 200px to 360px
+sed -i 's/max_height=200/max_height=360/' script-opts/thumbfast.conf
+sed -i 's/max_width=200/max_width=360/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
@@ -30,9 +30,6 @@ rm -rf uosc
 
 # Enable autoload.
 sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
-
-# Change UI scale from 1 to 2.
-sed -i 's/ui_scale=1/ui_scale=2/' script-opts/uosc.conf
 
 # Don't dim screen when menu triggered.
 sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
