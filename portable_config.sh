@@ -33,6 +33,9 @@ cp -rf uosc/scripts/* scripts
 cp -f uosc/script-opts/uosc.conf script-opts
 rm -rf uosc
 
+# Enable autoload.
+sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
+
 # Don't dim screen when menu triggered.
 sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
 
