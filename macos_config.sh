@@ -11,6 +11,12 @@ mkdir -p $DIR/macos_config/scripts
 cd $DIR/macos_config 
 # get thumbfast
 git clone https://github.com/po5/thumbfast.git --branch master
+
+# Fix double icons on docker for mac users.
+cd thumbfast
+patch -p1 -i ../*.patch
+cd ..
+
 cp -f thumbfast/thumbfast.lua scripts  
 cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
