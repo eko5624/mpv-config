@@ -2,7 +2,9 @@ name: autoupdate
 
 on: 
    workflow_dispatch:
-
+   schedule:
+   - cron: '0 0 * * MON'
+  
 jobs:
   build:
     runs-on: ubuntu-latest
