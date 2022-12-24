@@ -12,6 +12,7 @@ jobs:
       uses: actions/checkout@main
       with:
         fetch-depth: 0
+        token: ${{ secrets.BOT }}
     - name: Install git
       run: |
         sudo apt-get update
@@ -22,7 +23,7 @@ jobs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
     - name: Build
       run: |
-        git reset --hard $commit
+        git reset --hard 9269748
     - name: release
       run: |
         git commit -am "Automate" || echo "nothing updated"
