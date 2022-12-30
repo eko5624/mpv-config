@@ -14,7 +14,7 @@ git clone https://github.com/po5/thumbfast.git --branch master
 
 # Fix double icons on docker for mac users.
 cd thumbfast
-patch -p1 -i ../../thumbfast-fix-double-icons-on-docker.patch
+patch -p1 -i ../../thumbfast-fix-double-icons-on-dock.patch
 cd ..
 
 cp -f thumbfast/thumbfast.lua scripts  
