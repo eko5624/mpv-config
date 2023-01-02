@@ -89,6 +89,12 @@ mv -f ./inputevent.lua scripts
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
 
+# Get mpv-playlistmanager
+curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.lua
+curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
+mv -f ./playlistmanager.lua scripts
+mv -f ./playlistmanager.conf script-opts
+
 # Get stats.conf
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
 mv -f ./stats.conf script-opts
