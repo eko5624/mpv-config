@@ -12,7 +12,7 @@ cd $DIR/macos_config
 # Get thumbfast
 git clone https://github.com/po5/thumbfast.git --branch master
 
-# Fix double icons on docker for mac users.
+# Fix double icons on dock for mac users.
 cd thumbfast
 patch -p1 -i ../../thumbfast-fix-double-icons-on-dock.patch
 cd ..
