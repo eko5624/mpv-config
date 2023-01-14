@@ -60,14 +60,25 @@ function command_invert(command)
     for i, v in ipairs(command_list) do
         local trimed = v:trim()
         local subs = trimed:split("%s*")
-        local prefix = table.has(prefixes, subs[1]) and subs[1] or ""
-        local command = subs[prefix == "" and 1 or 2]
-        local property = subs[prefix == "" and 2 or 3]
+        local prefix = ""
+        local command = ""
+        local property = ""
+
+        for index, value in ipairs(subs) do
+            if table.has(prefixes, value) then
+                prefix = prefix .. value .. " "
+            elseif command == "" then
+                command = value
+            elseif property == "" then
+                property = value
+            end
+        end
+
         local value = mp.get_property(property)
         local semi = i == #command_list and "" or ";"
 
         if table.has(commands, command) then
-            invert = invert .. prefix .. " set " .. property .. " " .. value .. semi
+            invert = invert .. prefix .. "set " .. property .. " " .. value .. semi
         else
             mp.msg.warn("\"" .. trimed .. "\" doesn't support auto restore.")
         end
@@ -145,11 +156,11 @@ function InputEvent:new(key, on)
     self.__index = self;
 
     Instance.key = key
-    Instance.name = "@" .. key
     Instance.on = table.assign({ click = "" }, on)
     Instance.queue = {}
     Instance.queue_max = { length = 0 }
     Instance.duration = mp.get_property_number("input-doubleclick-time", 300)
+    Instance.ignored = {}
 
     for _, event in ipairs(event_pattern) do
         if Instance.on[event.to] and event.length > 1 then
@@ -162,13 +173,12 @@ function InputEvent:new(key, on)
 end
 
 function InputEvent:emit(event)
-    local ignore = event .. "-ignore"
-    if self.on[ignore] then
-        if now() - self.on[ignore] < self.duration then
+    if self.ignored[event] then
+        if now() - self.ignored[event] < self.duration then
             return
         end
 
-        self.on[ignore] = nil
+        self.ignored[event] = nil
     end
 
     if event == "press" and self.on["release"] == "ignore" then
@@ -177,6 +187,10 @@ function InputEvent:emit(event)
 
     if event == "release" and self.on[event] == "ignore" then
         event = "release-auto"
+    end
+
+    if event == "repeat" and self.on[event] == "ignore" then
+        event = "click"
     end
 
     local cmd = self.on[event]
@@ -202,7 +216,7 @@ function InputEvent:handler(event)
     end
 
     if event == "down" then
-        self.on["repeat-ignore"] = now()
+        self:ignore("repeat")
     end
 
     if event == "repeat" then
@@ -249,13 +263,19 @@ function InputEvent:exec()
     self.queue = {}
 end
 
+function InputEvent:ignore(event, timeout)
+    timeout = timeout or 0
+
+    self.ignored[event] = now() + timeout
+end
+
 function InputEvent:bind()
     self.exec_debounced = debounce(function() self:exec() end, self.duration)
-    mp.add_forced_key_binding(self.key, self.name, function(e) self:handler(e.event) end, { complex = true })
+    mp.add_forced_key_binding(self.key, self.key, function(e) self:handler(e.event) end, { complex = true })
 end
 
 function InputEvent:unbind()
-    mp.remove_key_binding(self.name)
+    mp.remove_key_binding(self.key)
 end
 
 function InputEvent:rebind(diff)
@@ -394,7 +414,7 @@ end)
 mp.observe_property("focused", "native", function(_, focused)
     local binding = bind_map["MBTN_LEFT"]
     if not binding or not focused then return end
-    binding.on["click-ignore"] = now() + 100
+    binding:ignore("click", 100)
 end)
 
 mp.register_script_message("bind", bind)
