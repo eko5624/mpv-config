@@ -27,65 +27,6 @@ local prefixes = { "osd-auto", "no-osd", "osd-bar", "osd-msg", "osd-msg-bar", "r
 -- https://mpv.io/manual/master/#list-of-input-commands
 local commands = { "set", "cycle", "add", "multiply" }
 
-local function debounce(func, wait)
-    func = type(func) == "function" and func or function() end
-    wait = type(wait) == "number" and wait / 1000 or 0
-
-    local timer = nil
-    local timer_end = function()
-        timer:kill()
-        timer = nil
-        func()
-    end
-
-    return function()
-        if timer then
-            timer:kill()
-        end
-        timer = mp.add_timeout(wait, timer_end)
-    end
-end
-
-function now()
-    return mp.get_time() * 1000
-end
-
-function command(command)
-    return mp.command(command)
-end
-
-function command_invert(command)
-    local invert = ""
-    local command_list = command:split(";")
-    for i, v in ipairs(command_list) do
-        local trimed = v:trim()
-        local subs = trimed:split("%s*")
-        local prefix = ""
-        local command = ""
-        local property = ""
-
-        for index, value in ipairs(subs) do
-            if table.has(prefixes, value) then
-                prefix = prefix .. value .. " "
-            elseif command == "" then
-                command = value
-            elseif property == "" then
-                property = value
-            end
-        end
-
-        local value = mp.get_property(property)
-        local semi = i == #command_list and "" or ";"
-
-        if table.has(commands, command) then
-            invert = invert .. prefix .. "set " .. property .. " " .. value .. semi
-        else
-            mp.msg.warn("\"" .. trimed .. "\" doesn't support auto restore.")
-        end
-    end
-    return invert
-end
-
 function table:push(element)
     self[#self + 1] = element
     return self
@@ -148,6 +89,98 @@ function string:split(separator)
     return fields
 end
 
+function debounce(func, wait)
+    func = type(func) == "function" and func or function() end
+    wait = type(wait) == "number" and wait / 1000 or 0
+
+    local timer = nil
+    local timer_end = function()
+        timer:kill()
+        timer = nil
+        func()
+    end
+
+    return function()
+        if timer then
+            timer:kill()
+        end
+        timer = mp.add_timeout(wait, timer_end)
+    end
+end
+
+function now()
+    return mp.get_time() * 1000
+end
+
+function command(command)
+    return mp.command(command)
+end
+
+function command_split(command)
+    local separator = { ";" }
+    local escape = { "\\" }
+    local quotation = { '"', "'" }
+    local quotation_stack = {}
+    local result = {}
+    local temp = ""
+
+    for i = 1, #command do
+        local char = command:sub(i, i)
+
+        if table.has(separator, char) and #quotation_stack == 0 then
+            result = table.push(result, temp)
+            temp = ""
+        elseif table.has(quotation, char) and not table.has(escape, temp:sub(#temp, #temp)) then
+            temp = temp .. char
+            if quotation_stack[#quotation_stack] == char then
+                quotation_stack = table.filter(quotation_stack, function(i, v) return i ~= #quotation_stack end)
+            else
+                quotation_stack = table.push(quotation_stack, char)
+            end
+        else
+            temp = temp .. char
+        end
+    end
+
+    if #temp then
+        result = table.push(result, temp)
+    end
+
+    return result
+end
+
+function command_invert(command)
+    local invert = ""
+    local command_list = command_split(command)
+    for i, v in ipairs(command_list) do
+        local trimed = v:trim()
+        local subs = trimed:split("%s*")
+        local prefix = ""
+        local command = ""
+        local property = ""
+
+        for index, value in ipairs(subs) do
+            if command == "" and table.has(prefixes, value) then
+                prefix = prefix .. value .. " "
+            elseif command == "" then
+                command = value
+            elseif property == "" then
+                property = value
+            end
+        end
+
+        local value = mp.get_property(property)
+        local semi = i == #command_list and "" or ";"
+
+        if table.has(commands, command) then
+            invert = invert .. prefix .. "set " .. property .. " " .. value .. semi
+        else
+            mp.msg.warn("\"" .. trimed .. "\" doesn't support auto restore.")
+        end
+    end
+    return invert
+end
+
 local InputEvent = {}
 
 function InputEvent:new(key, on)
@@ -198,9 +231,9 @@ function InputEvent:emit(event)
         return
     end
 
-    local expand = mp.command_native({'expand-text', cmd})
-    if #cmd:split(";") == #expand:split(";") then
-        cmd = mp.command_native({'expand-text', cmd})
+    local expand = mp.command_native({ 'expand-text', cmd })
+    if #command_split(cmd) == #command_split(expand) then
+        cmd = mp.command_native({ 'expand-text', cmd })
     else
         mp.msg.warn("Unsafe property-expansion: " .. cmd)
     end
@@ -397,7 +430,7 @@ function bind_from_options_configs()
 end
 
 function on_options_configs_update(list)
-    if(list.configs) then
+    if (list.configs) then
         for key, value in pairs(bind_map) do
             unbind(key)
         end
