@@ -85,6 +85,12 @@ sed -i 's/📋/✂︎/' script-opts/SmartCopyPaste_II.conf
 curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
 mv -f ./inputevent.lua scripts
 
+# Get quality-menu
+curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
+mv -f ./quality-menu.lua scripts
+curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
+mv -f ./quality-menu.conf script-opts
+
 # Get autoload.lua
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
