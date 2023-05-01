@@ -160,6 +160,8 @@ local file_timer = nil
 local file_check_period = 1/60
 local first_file = false
 
+local allow_fast_seek = true
+
 local client_script = [=[
 #!/usr/bin/env bash
 MPV_IPC_FD=0; MPV_IPC_PATH="%s"
@@ -374,7 +376,7 @@ local function spawn(time)
     has_vid = vid or 0
 
     local args = {
-        "mpv", path, "--no-config", "--msg-level=all=no", "--idle", "--pause", "--keep-open=always", "--really-quiet", "--no-terminal",
+        mpv_path, "--no-config", "--msg-level=all=no", "--idle", "--pause", "--keep-open=always", "--really-quiet", "--no-terminal",
         "--edition="..(mp.get_property_number("edition") or "auto"), "--vid="..(vid or "auto"), "--no-sub", "--no-audio",
         "--start="..time, "--hr-seek=no",
         "--ytdl-format=worst", "--demuxer-readahead-secs=0", "--demuxer-max-bytes=128KiB",
@@ -408,6 +410,9 @@ local function spawn(time)
             table.insert(args, "--scripts="..client_script_path)
         end
     end
+
+    table.insert(args, "--")
+    table.insert(args, path)
 
     spawned = true
     spawn_waiting = true
@@ -523,6 +528,10 @@ end)
 seek_timer:kill()
 
 local function request_seek()
+    if not allow_fast_seek then
+        seek()
+        return
+    end
     if seek_timer:is_enabled() then
         seek_period_counter = 0
     else
@@ -715,11 +724,16 @@ local function shutdown()
     end
 end
 
+local function on_duration(prop, val)
+    allow_fast_seek = (val or 30) >= 30
+end
+
 mp.observe_property("display-hidpi-scale", "native", mark_dirty)
 mp.observe_property("video-out-params", "native", mark_dirty)
 mp.observe_property("vf", "native", mark_dirty)
 mp.observe_property("vid", "native", sync_changes)
 mp.observe_property("edition", "native", sync_changes)
+mp.observe_property("duration", "native", on_duration)
 
 mp.register_script_message("thumb", thumb)
 mp.register_script_message("clear", clear)
