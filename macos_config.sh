@@ -13,9 +13,9 @@ cd $DIR/macos_config
 git clone https://github.com/po5/thumbfast.git --branch master
 
 # Fix double icons on dock for mac users.
-cd thumbfast
-patch -p1 -i ../../thumbfast-fix-double-icons-on-dock.patch
-cd ..
+# cd thumbfast
+# patch -p1 -i ../../thumbfast-fix-double-icons-on-dock.patch
+# cd ..
 
 cp -f thumbfast/thumbfast.lua scripts  
 cp -f thumbfast/thumbfast.conf script-opts
