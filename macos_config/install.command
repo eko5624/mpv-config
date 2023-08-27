@@ -52,6 +52,7 @@ y)
   fi
   cp -Rf ./* ~/.config/mpv/
   rm -Rf ~/.config/mpv/*.command
+  ln -s ~/.config/mpv/yt-dlp /usr/local/bin
 
   echo_result $? "复制文件到 ~/.config/mpv 目录"
   ;;
