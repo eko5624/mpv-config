@@ -22,6 +22,6 @@ jobs:
     - name: Executable flag setting
       run: |
         git checkout main
-        chmod +x *.sh 
+        chmod +x *.sh yt-dlp
         git commit *.sh -m "Executable-flag-setting"
         git push  
