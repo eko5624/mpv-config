@@ -16,6 +16,7 @@ echo "Gettiong hdr-toys"
 echo "======================="
 curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/releases/download/v2308/HDR-Toys.v2308.zip
 unzip HDR-Toys.v2308.zip
+cd "HDR-Toys v2308"
 cp -f scripts/hdr-toys-helper.lua scripts
 cp -rf shaders ./
 
