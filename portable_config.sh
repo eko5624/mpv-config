@@ -12,7 +12,7 @@ mkdir -p $DIR/portable_config/scripts
 
 cd $DIR/portable_config
 
-echo "Getting hdr-toys"
+echo "Getting HDR Toys"
 echo "======================="
 curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/releases/download/v2308/HDR-Toys.v2308.zip
 unzip HDR-Toys.v2308.zip
@@ -96,36 +96,36 @@ curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/
 mv -f ./SmartCopyPaste_II.lua scripts
 mv -f ./SmartCopyPaste_II.conf script-opts
 
-echo "Getting InputEvent.lua"
+echo "Getting InputEvent"
 echo "======================="
 curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
 mv -f ./inputevent.lua scripts
 
-echo "Getting quality-menu"
+echo "Getting quality menu"
 echo "======================="
 curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
 mv -f ./quality-menu.lua scripts
 curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
 mv -f ./quality-menu.conf script-opts
 
-echo "Getting autoload.lua"
+echo "Getting autoload"
 echo "======================="
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
 
-echo "Getting mpv-playlistmanager"
+echo "Getting mpv playlistmanager"
 echo "======================="
 curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.lua
 curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
 mv -f ./playlistmanager.lua scripts
 mv -f ./playlistmanager.conf script-opts
 
-echo "Getting stats.conf"
+echo "Getting stats"
 echo "======================="
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
 mv -f ./stats.conf script-opts
 
-echo "Getting ytdl_hook.conf"
+echo "Getting ytdl_hook"
 echo "======================="
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/ytdl_hook.conf
 mv -f ./ytdl_hook.conf script-opts
