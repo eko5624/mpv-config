@@ -12,11 +12,6 @@ cd $DIR/macos_config
 # Get thumbfast
 git clone https://github.com/po5/thumbfast.git --branch master
 
-# Fix double icons on dock for mac users.
-# cd thumbfast
-# patch -p1 -i ../../thumbfast-fix-double-icons-on-dock.patch
-# cd ..
-
 cp -f thumbfast/thumbfast.lua scripts  
 cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
@@ -53,9 +48,11 @@ sed -i 's/timeline_size_max_fullscreen=60/timeline_size_max_fullscreen=40/' scri
 sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
 sed -i 's/<has_many_audio>audio/audio/' script-opts/uosc.conf
 
-# Add simplified chinese translation.
+# Add 'play/pause' 'stats' buttons.
 sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc/elements/Controls.lua
 sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc/elements/Controls.lua
+
+# Add simplified chinese translation. No need anymore.
 #sed -i 's/?Menu/?菜单/' scripts/uosc/elements/Controls.lua
 #sed -i 's/?Subtitles/?字幕轨/' scripts/uosc/elements/Controls.lua
 #sed -i "s/?Audio',/?音频轨',/" scripts/uosc/elements/Controls.lua
