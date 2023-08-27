@@ -54,8 +54,8 @@ sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_pre
 sed -i 's/<has_many_audio>audio/audio/' script-opts/uosc.conf
 
 # Add simplified chinese translation.
-#sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc/elements/Controls.lua
-#sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc/elements/Controls.lua
+sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc/elements/Controls.lua
+sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc/elements/Controls.lua
 #sed -i 's/?Menu/?菜单/' scripts/uosc/elements/Controls.lua
 #sed -i 's/?Subtitles/?字幕轨/' scripts/uosc/elements/Controls.lua
 #sed -i "s/?Audio',/?音频轨',/" scripts/uosc/elements/Controls.lua
