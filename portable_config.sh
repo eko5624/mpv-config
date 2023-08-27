@@ -17,8 +17,11 @@ echo "======================="
 curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/releases/download/v2308/HDR-Toys.v2308.zip
 unzip HDR-Toys.v2308.zip
 cd "HDR-Toys v2308"
-cp -f scripts/hdr-toys-helper.lua scripts
-cp -rf shaders ./
+cp -f scripts/hdr-toys-helper.lua ../scripts
+cp -rf shaders ../
+cd ..
+rm -rf "HDR-Toys v2308"
+rm HDR-Toys.v2308.zip
 
 echo "Gettiong thumbfast"
 echo "======================="
