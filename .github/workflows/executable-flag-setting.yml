@@ -21,6 +21,7 @@ jobs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
     - name: Executable flag setting
       run: |
-        chmod +x *.sh yt-dlp
-        git commit *.sh -m "Executable-flag-setting"
-        git push  
+        chmod +x *.sh 
+        git add -A
+        git commit -am "executable flag setting" || echo "nothing updated"
+        git push 
