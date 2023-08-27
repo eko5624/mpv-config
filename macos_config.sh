@@ -9,8 +9,8 @@ mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
 
 cd $DIR/macos_config
-echo "Gettiong thumbfast"
-echo "======================="
+echo "Getting thumbfast"
+echo "============"
 git clone https://github.com/po5/thumbfast.git --branch master
 
 cp -f thumbfast/thumbfast.lua scripts  
@@ -23,8 +23,8 @@ sed -i 's/max_width=200/max_width=360/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
-echo "Gettiong uosc"
-echo "======================="
+echo "Getting uosc"
+echo "============"
 git clone https://github.com/tomasklaen/uosc.git --branch main
 cp -r uosc/fonts ./
 cp -rf uosc/scripts/* scripts
@@ -75,8 +75,8 @@ sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-bindin
 #sed -i 's/?Shuffle/?乱序播放/' scripts/uosc/elements/Controls.lua
 #sed -i 's/?Fullscreen/?切换全屏/' scripts/uosc/elements/Controls.lua
 
-echo "Gettiong SmartCopyPaste_II.lua"
-echo "======================="
+echo "Getting SmartCopyPaste_II.lua"
+echo "============"
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
 curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
 mv -f ./SmartCopyPaste_II.lua scripts
@@ -84,41 +84,41 @@ mv -f ./SmartCopyPaste_II.conf script-opts
 sed -i 's/🕒/⧗/' script-opts/SmartCopyPaste_II.conf
 sed -i 's/📋/✂︎/' script-opts/SmartCopyPaste_II.conf
 
-echo "Gettiong InputEvent.lua"
-echo "======================="
+echo "Getting InputEvent.lua"
+echo "============"
 curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
 mv -f ./inputevent.lua scripts
 
-echo "Gettiong quality-menu"
-echo "======================="
+echo "Getting quality-menu"
+echo "============"
 curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
 mv -f ./quality-menu.lua scripts
 curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
 mv -f ./quality-menu.conf script-opts
 
-echo "Gettiong autoload.lua"
-echo "======================="
+echo "Getting autoload.lua"
+echo "============"
 curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
 mv -f ./autoload.lua scripts
 
-echo "Gettiong mpv-playlistmanager"
-echo "======================="
+echo "Getting mpv-playlistmanager"
+echo "============"
 curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.lua
 curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
 mv -f ./playlistmanager.lua scripts
 mv -f ./playlistmanager.conf script-opts
 
-echo "Gettiong stats.conf"
-echo "======================="
+echo "Gettong stats.conf"
+echo "============"
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
 mv -f ./stats.conf script-opts
 
-echo "Gettiong ytdl_hook.conf"
-echo "======================="
+echo "Getting ytdl_hook.conf"
+echo "============"
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/ytdl_hook.conf
 mv -f ./ytdl_hook.conf script-opts
 
-echo "Gettiong yt-dlp"
+echo "Getting yt-dlp"
 echo "======================="
-curl -O https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+curl -OL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
 chmod +x yt-dlp
