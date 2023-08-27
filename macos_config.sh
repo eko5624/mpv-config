@@ -121,3 +121,4 @@ mv -f ./ytdl_hook.conf script-opts
 echo "Gettiong yt-dlp"
 echo "======================="
 curl -O https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+chmod +x yt-dlp
