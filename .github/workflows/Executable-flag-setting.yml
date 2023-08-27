@@ -1,4 +1,4 @@
-name: Executable flag setting
+name: executable-flag-setting
 
 on: 
    workflow_dispatch:
