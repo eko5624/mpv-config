@@ -71,7 +71,7 @@ end
 
 function TopBar:decide_enabled()
 	if options.top_bar == 'no-border' then
-		self.enabled = not state.border or state.fullscreen
+		self.enabled = not state.border or state.title_bar == false or state.fullscreen
 	else
 		self.enabled = options.top_bar == 'always'
 	end
@@ -144,6 +144,11 @@ function TopBar:on_prop_border()
 	self:update_dimensions()
 end
 
+function TopBar:on_prop_title_bar()
+	self:decide_enabled()
+	self:update_dimensions()
+end
+
 function TopBar:on_prop_fullscreen()
 	self:decide_enabled()
 	self:update_dimensions()
@@ -160,6 +165,11 @@ function TopBar:on_prop_has_playlist()
 end
 
 function TopBar:on_display() self:update_dimensions() end
+
+function TopBar:on_options()
+	self:decide_enabled()
+	self:update_dimensions()
+end
 
 function TopBar:render()
 	local visibility = self:get_visibility()
