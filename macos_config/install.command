@@ -50,7 +50,8 @@ y)
   if [ ! -d "~/.config/mpv" ]; then # 如果不存在 .config/mpv 目录
     mkdir ~/.config/mpv
   fi
-  cp -Rf ./* ~/.config/mpv/
+rm -Rf ~/.config/mpv/*  
+cp -Rf ./* ~/.config/mpv/
   rm -Rf ~/.config/mpv/*.command
   if [ ! -L "/usr/local/bin/yt-dlp" ]; then # 如果yt-dlp没加入环境变量
     ln -s ~/.config/mpv/yt-dlp /usr/local/bin
