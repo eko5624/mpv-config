@@ -6,7 +6,6 @@ opt = require('mp.options')
 utils = require('mp.utils')
 msg = require('mp.msg')
 osd = mp.create_osd_overlay('ass-events')
-INFINITY = 1e309
 QUARTER_PI_SIN = math.sin(math.pi / 4)
 
 require('lib/std')
@@ -66,7 +65,7 @@ defaults = {
 	text_border = 1.2,
 	border_radius = 2,
 	opacity = '',
-	animation_factor = 0.3,
+	animation_duration = 100,
 	text_width_estimation = true,
 	pause_on_click_shorter_than = 0, -- deprecated by below
 	click_threshold = 0,
@@ -189,7 +188,8 @@ config = {
 	opacity = {
 		timeline = .9, position = 1, chapters = 0.8, slider = 0.9, slider_gauge = 1, speed = 0.6,
 		menu = 1, submenu = 0.4, border = 1, title = 1, tooltip = 1, thumbnail = 1, curtain = 0.5
-	}
+	},
+	cursor_leave_fadeout_elements = {'timeline', 'volume', 'top_bar', 'controls'}
 }
 -- Adds `{element}_persistency` property with table of flags when the element should be visible (`{paused = true}`)
 for _, name in ipairs({'timeline', 'controls', 'volume', 'top_bar', 'speed'}) do
@@ -248,8 +248,8 @@ end
 
 display = {width = 1280, height = 720, initialized = false}
 cursor = {
-	x = 0,
-	y = 0,
+	x = math.huge,
+	y = math.huge,
 	hidden = true,
 	hover_raw = false,
 	-- Event handlers that are only fired on cursor, bound during render loop. Guidelines:
@@ -260,6 +260,7 @@ cursor = {
 	on_wheel_down = nil,
 	on_wheel_up = nil,
 	allow_dragging = false,
+	first_real_mouse_move_received = false,
 	history = CircularBuffer:new(10),
 	-- Called at the beginning of each render
 	reset_handlers = function()
@@ -309,39 +310,51 @@ cursor = {
 		-- mpv reports initial mouse position on linux as (0, 0), which always
 		-- displays the top bar, so we hardcode cursor position as infinity until
 		-- we receive a first real mouse move event with coordinates other than 0,0.
-		if not state.first_real_mouse_move_received then
-			if x > 0 and y > 0 then state.first_real_mouse_move_received = true
-			else x, y = INFINITY, INFINITY end
+		if not cursor.first_real_mouse_move_received then
+			if x > 0 and y > 0 then cursor.first_real_mouse_move_received = true
+			else x, y = math.huge, math.huge end
 		end
 
 		-- Add 0.5 to be in the middle of the pixel
-		cursor.x, cursor.y = x + 0.5, y + 0.5
+		cursor.x = x == math.huge and x or x + 0.5
+		cursor.y = y == math.huge and y or y + 0.5
 
 		if old_x ~= cursor.x or old_y ~= cursor.y then
-			Elements:update_proximities()
-
-			if cursor.x == INFINITY or cursor.y == INFINITY then
+			if cursor.x == math.huge or cursor.y == math.huge then
 				cursor.hidden = true
 				cursor.history:clear()
 
 				-- Slowly fadeout elements that are currently visible
-				for _, element_name in ipairs({'timeline', 'volume', 'top_bar'}) do
-					local element = Elements[element_name]
-					if element and element.proximity > 0 then
-						element:tween_property('forced_visibility', element:get_visibility(), 0, function()
-							element.forced_visibility = nil
-						end)
+				for _, id in ipairs(config.cursor_leave_fadeout_elements) do
+					local element = Elements[id]
+					if element then
+						local visibility = element:get_visibility()
+						if visibility > 0 then
+							element:tween_property('forced_visibility', visibility, 0, function()
+								element.forced_visibility = nil
+							end)
+						end
 					end
 				end
 
+				Elements:update_proximities()
 				Elements:trigger('global_mouse_leave')
-			elseif cursor.hidden then
-				cursor.hidden = false
-				cursor.history:clear()
-				Elements:trigger('global_mouse_enter')
 			else
-				-- Update history
-				cursor.history:insert({x = cursor.x, y = cursor.y, time = mp.get_time()})
+				Elements:update_proximities()
+
+				if cursor.hidden then
+					-- Cancel potential fadeouts
+					for _, id in ipairs(config.cursor_leave_fadeout_elements) do
+						if Elements[id] then Elements[id]:tween_stop() end
+					end
+
+					cursor.hidden = false
+					cursor.history:clear()
+					Elements:trigger('global_mouse_enter')
+				else
+					-- Update history
+					cursor.history:insert({x = cursor.x, y = cursor.y, time = mp.get_time()})
+				end
 			end
 
 			Elements:proximity_trigger('mouse_move')
@@ -350,7 +363,7 @@ cursor = {
 
 		request_render()
 	end,
-	leave = function () cursor.move(INFINITY, INFINITY) end,
+	leave = function () cursor.move(math.huge, math.huge) end,
 	-- Cursor auto-hiding after period of inactivity
 	autohide = function()
 		if not cursor.on_primary_up and not Menu:is_open() then cursor.leave() end
@@ -416,6 +429,7 @@ state = {
 	is_audio = false, -- true if file is audio only (mp3, etc)
 	is_image = false,
 	is_stream = false,
+	has_image = false,
 	has_audio = false,
 	has_sub = false,
 	has_chapter = false,
@@ -432,7 +446,6 @@ state = {
 	core_idle = false,
 	eof_reached = false,
 	render_delay = config.render_delay,
-	first_real_mouse_move_received = false,
 	playlist_count = 0,
 	playlist_pos = 0,
 	margin_top = 0,
@@ -740,6 +753,7 @@ mp.observe_property('track-list', 'native', function(name, value)
 	end
 	set_state('is_audio', types.video == 0 and types.audio > 0)
 	set_state('is_image', types.image > 0 and types.video == 0 and types.audio == 0)
+	set_state('has_image', types.image > 0)
 	set_state('has_audio', types.audio > 0)
 	set_state('has_many_audio', types.audio > 1)
 	set_state('has_sub', types.sub > 0)
