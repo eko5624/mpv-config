@@ -52,7 +52,7 @@ sed -i 's/languages=slang,en/languages=zh-hans/' script-opts/uosc.conf
 sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
 
 # Don't dim screen when menu triggered.
-sed -i 's/curtain_opacity=0.5/curtain_opacity=0/' script-opts/uosc.conf
+sed -i 's/opacity=/opacity=curtain=0/' script-opts/uosc.conf
 
 # Don't show timeline when paused.
 sed -i 's/timeline_persistency=paused/timeline_persistency=idle,audio/' script-opts/uosc.conf
