@@ -1,6 +1,8 @@
 --[[ uosc 4.7.0 - 2023-Apr-15 | https://github.com/tomasklaen/uosc ]]
 local uosc_version = '4.7.0'
 
+mp.commandv('script-message', 'uosc-version', uosc_version)
+
 assdraw = require('mp.assdraw')
 opt = require('mp.options')
 utils = require('mp.utils')
@@ -130,11 +132,13 @@ t = intl.t
 --[[ CONFIG ]]
 local config_defaults = {
 	color = {
-		foreground = 'ffffff',
-		foreground_text = '000000',
-		background = '000000',
-		background_text = 'ffffff',
-		curtain = '111111',
+		foreground = serialize_rgba('ffffff').color,
+		foreground_text = serialize_rgba('000000').color,
+		background = serialize_rgba('000000').color,
+		background_text = serialize_rgba('ffffff').color,
+		curtain = serialize_rgba('111111').color,
+		success = serialize_rgba('a5e075').color,
+		error = serialize_rgba('ff616e').color,
 	},
 	opacity = {
 		timeline = 0.9,
@@ -293,6 +297,7 @@ function create_default_menu_items()
 				{title = t('Inputs'), value = 'script-binding uosc/inputs'},
 				{title = t('Show in directory'), value = 'script-binding uosc/show-in-directory'},
 				{title = t('Open config folder'), value = 'script-binding uosc/open-config-directory'},
+				{title = t('Update uosc'), value = 'script-binding uosc/update'},
 			},
 		},
 		{title = t('Quit'), value = 'quit'},
@@ -1059,7 +1064,7 @@ bind_command('last', function()
 end)
 bind_command('first-file', function() load_file_index_in_current_directory(1) end)
 bind_command('last-file', function() load_file_index_in_current_directory(-1) end)
-bind_command('delete-file-next', function()
+local function delete_file_navigate(delta)
 	local next_file = nil
 	local is_local_file = state.path and not is_protocol(state.path)
 
@@ -1076,7 +1081,7 @@ bind_command('delete-file-next', function()
 				hidden = options.show_hidden_files,
 			})
 			if paths and current_index then
-				local index, path = decide_navigation_in_list(paths, current_index, 1)
+				local index, path = decide_navigation_in_list(paths, current_index, delta)
 				if path then next_file = path end
 			end
 		end
@@ -1089,7 +1094,9 @@ bind_command('delete-file-next', function()
 	end
 
 	if is_local_file then delete_file(state.path) end
-end)
+end
+bind_command('delete-file-prev', function () delete_file_navigate(-1) end)
+bind_command('delete-file-next', function () delete_file_navigate(1) end)
 bind_command('delete-file-quit', function()
 	mp.command('stop')
 	if state.path and not is_protocol(state.path) then delete_file(state.path) end
@@ -1141,15 +1148,15 @@ bind_command('open-config-directory', function()
 		msg.error('Couldn\'t serialize config path "' .. config_path .. '".')
 	end
 end)
+bind_command('update', function()
+	if not Elements:has('updater') then require('elements/Updater'):new() end
+end)
 
 --[[ MESSAGE HANDLERS ]]
 
 mp.register_script_message('show-submenu', function(id) toggle_menu_with_items({submenu = id}) end)
 mp.register_script_message('show-submenu-blurred', function(id)
 	toggle_menu_with_items({submenu = id, mouse_nav = true})
-end)
-mp.register_script_message('get-version', function(script)
-	mp.commandv('script-message-to', script, 'uosc-version', config.version)
 end)
 mp.register_script_message('open-menu', function(json, submenu_id)
 	local data = utils.parse_json(json)
