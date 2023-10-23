@@ -58,11 +58,12 @@
 	"playlist or file": "Wiedergabeliste oder Datei",
 	"type & ctrl+enter to search": "Tippe & Strg+Eingabe um zu suchen",
 	"type to search": "Tippe um zu suchen",
-	"Inputs": "Tastenkürzel",
+	"Key bindings": "Tastenkürzel",
 	"Drop files or URLs to play here": "Dateien oder URLs zum Abspielen hier ablegen",
 	"Update uosc": "Aktualisiere uosc",
 	"Updating uosc": "uosc wird aktualisiert",
 	"uosc has been installed. Restart mpv for it to take effect.": "uosc wurde installiert. mpv muss neu gestarted werden um es wirksam zu machen.",
 	"An error has occurred.": "Ein Fehler ist aufgetreten.",
-	"See above for clues.": "Siehe oben für Hinweise."
+	"See above for clues.": "Siehe oben für Hinweise.",
+	"Play/Pause": "Abspielen/Pause"
 }

@@ -1,5 +1,5 @@
---[[ uosc 4.7.0 - 2023-Apr-15 | https://github.com/tomasklaen/uosc ]]
-local uosc_version = '4.7.0'
+--[[ uosc | https://github.com/tomasklaen/uosc ]]
+local uosc_version = '5.0.0'
 
 mp.commandv('script-message', 'uosc-version', uosc_version)
 
@@ -21,7 +21,7 @@ defaults = {
 	progress = 'windowed',
 	progress_size = 2,
 	progress_line_width = 20,
-	timeline_persistency = 'paused',
+	timeline_persistency = '',
 	timeline_border = 1,
 	timeline_step = 5,
 	timeline_cache = true,
@@ -294,7 +294,7 @@ function create_default_menu_items()
 				{title = t('Audio devices'), value = 'script-binding uosc/audio-device'},
 				{title = t('Editions'), value = 'script-binding uosc/editions'},
 				{title = t('Screenshot'), value = 'async screenshot'},
-				{title = t('Inputs'), value = 'script-binding uosc/inputs'},
+				{title = t('Key bindings'), value = 'script-binding uosc/keybinds'},
 				{title = t('Show in directory'), value = 'script-binding uosc/show-in-directory'},
 				{title = t('Open config folder'), value = 'script-binding uosc/open-config-directory'},
 				{title = t('Update uosc'), value = 'script-binding uosc/update'},
@@ -820,45 +820,22 @@ bind_command('toggle-title', function() Elements:maybe('top_bar', 'toggle_title'
 bind_command('decide-pause-indicator', function() Elements:maybe('pause_indicator', 'decide') end)
 bind_command('menu', function() toggle_menu_with_items() end)
 bind_command('menu-blurred', function() toggle_menu_with_items({mouse_nav = true}) end)
-bind_command('inputs', function()
-	if Menu:is_open('inputs') then
+bind_command('keybinds', function()
+	if Menu:is_open('keybinds') then
 		Menu:close()
 	else
-		open_command_menu({type = 'inputs', items = get_input_items(), palette = true})
+		open_command_menu({type = 'keybinds', items = get_keybinds_items(), palette = true})
 	end
 end)
-local track_loaders = {
-	{name = 'subtitles', prop = 'sub', allowed_types = itable_join(config.types.video, config.types.subtitle)},
-	{name = 'audio', prop = 'audio', allowed_types = itable_join(config.types.video, config.types.audio)},
-	{name = 'video', prop = 'video', allowed_types = config.types.video},
-}
-for _, loader in ipairs(track_loaders) do
-	local menu_type = 'load-' .. loader.name
-	bind_command(menu_type, function()
-		if Menu:is_open(menu_type) then
-			Menu:close()
-			return
-		end
-
-		local path = state.path
-		if path then
-			if is_protocol(path) then
-				path = false
-			else
-				local serialized_path = serialize_path(path)
-				path = serialized_path ~= nil and serialized_path.dirname or false
-			end
-		end
-		if not path then
-			path = get_default_directory()
-		end
-		open_file_navigation_menu(
-			path,
-			function(path) mp.commandv(loader.prop .. '-add', path) end,
-			{type = menu_type, title = t('Load ' .. loader.name), allowed_types = loader.allowed_types}
-		)
-	end)
-end
+bind_command('load-subtitles', create_track_loader_menu_opener({
+	name = 'subtitles', prop = 'sub', allowed_types = itable_join(config.types.video, config.types.subtitle),
+}))
+bind_command('load-audio', create_track_loader_menu_opener({
+	name = 'audio', prop = 'audio', allowed_types = itable_join(config.types.video, config.types.audio),
+}))
+bind_command('load-video', create_track_loader_menu_opener({
+	name = 'video', prop = 'video', allowed_types = config.types.video,
+}))
 bind_command('subtitles', create_select_tracklist_type_menu_opener(
 	t('Subtitles'), 'sub', 'sid', 'script-binding uosc/load-subtitles'
 ))
@@ -949,93 +926,8 @@ bind_command('show-in-directory', function()
 		end
 	end
 end)
-bind_command('stream-quality', function()
-	if Menu:is_open('stream-quality') then
-		Menu:close()
-		return
-	end
-
-	local ytdl_format = mp.get_property_native('ytdl-format')
-	local items = {}
-
-	for _, height in ipairs(config.stream_quality_options) do
-		local format = 'bestvideo[height<=?' .. height .. ']+bestaudio/best[height<=?' .. height .. ']'
-		items[#items + 1] = {title = height .. 'p', value = format, active = format == ytdl_format}
-	end
-
-	Menu:open({type = 'stream-quality', title = t('Stream quality'), items = items}, function(format)
-		mp.set_property('ytdl-format', format)
-
-		-- Reload the video to apply new format
-		-- This is taken from https://github.com/jgreco/mpv-youtube-quality
-		-- which is in turn taken from https://github.com/4e6/mpv-reload/
-		local duration = mp.get_property_native('duration')
-		local time_pos = mp.get_property('time-pos')
-
-		mp.command('playlist-play-index current')
-
-		-- Tries to determine live stream vs. pre-recorded VOD. VOD has non-zero
-		-- duration property. When reloading VOD, to keep the current time position
-		-- we should provide offset from the start. Stream doesn't have fixed start.
-		-- Decent choice would be to reload stream from it's current 'live' position.
-		-- That's the reason we don't pass the offset when reloading streams.
-		if duration and duration > 0 then
-			local function seeker()
-				mp.commandv('seek', time_pos, 'absolute')
-				mp.unregister_event(seeker)
-			end
-			mp.register_event('file-loaded', seeker)
-		end
-	end)
-end)
-bind_command('open-file', function()
-	if Menu:is_open('open-file') then
-		Menu:close()
-		return
-	end
-
-	local directory
-	local active_file
-
-	if state.path == nil or is_protocol(state.path) then
-		local serialized = serialize_path(get_default_directory())
-		if serialized then
-			directory = serialized.path
-			active_file = nil
-		end
-	else
-		local serialized = serialize_path(state.path)
-		if serialized then
-			directory = serialized.dirname
-			active_file = serialized.path
-		end
-	end
-
-	if not directory then
-		msg.error('Couldn\'t serialize path "' .. state.path .. '".')
-		return
-	end
-
-	-- Update active file in directory navigation menu
-	local menu = nil
-	local function handle_file_loaded()
-		if menu and menu:is_alive() then
-			menu:activate_one_value(normalize_path(mp.get_property_native('path')))
-		end
-	end
-
-	menu = open_file_navigation_menu(
-		directory,
-		function(path) mp.commandv('loadfile', path) end,
-		{
-			type = 'open-file',
-			allowed_types = config.types.media,
-			active_path = active_file,
-			on_open = function() mp.register_event('file-loaded', handle_file_loaded) end,
-			on_close = function() mp.unregister_event(handle_file_loaded) end,
-		}
-	)
-end)
+bind_command('stream-quality', open_stream_quality_menu)
+bind_command('open-file', open_open_file_menu)
 bind_command('shuffle', function() set_state('shuffle', not state.shuffle) end)
 bind_command('items', function()
 	if state.has_playlist then
@@ -1064,39 +956,8 @@ bind_command('last', function()
 end)
 bind_command('first-file', function() load_file_index_in_current_directory(1) end)
 bind_command('last-file', function() load_file_index_in_current_directory(-1) end)
-local function delete_file_navigate(delta)
-	local next_file = nil
-	local is_local_file = state.path and not is_protocol(state.path)
-
-	if is_local_file then
-		if Menu:is_open('open-file') then Elements:maybe('menu', 'delete_value', state.path) end
-	end
-
-	if state.has_playlist then
-		mp.commandv('playlist-remove', 'current')
-	else
-		if is_local_file then
-			local paths, current_index = get_adjacent_files(state.path, {
-				types = config.types.autoload,
-				hidden = options.show_hidden_files,
-			})
-			if paths and current_index then
-				local index, path = decide_navigation_in_list(paths, current_index, delta)
-				if path then next_file = path end
-			end
-		end
-
-		if next_file then
-			mp.commandv('loadfile', next_file)
-		else
-			mp.commandv('stop')
-		end
-	end
-
-	if is_local_file then delete_file(state.path) end
-end
-bind_command('delete-file-prev', function () delete_file_navigate(-1) end)
-bind_command('delete-file-next', function () delete_file_navigate(1) end)
+bind_command('delete-file-prev', function() delete_file_navigate(-1) end)
+bind_command('delete-file-next', function() delete_file_navigate(1) end)
 bind_command('delete-file-quit', function()
 	mp.command('stop')
 	if state.path and not is_protocol(state.path) then delete_file(state.path) end
@@ -1116,8 +977,9 @@ bind_command('audio-device', create_self_updating_menu_opener({
 				local hint = string.match(device.name, ao .. '/(.+)')
 				if not hint then hint = device.name end
 				items[#items + 1] = {
-					title = device.description:sub(1, 7) == 'Default' and t('Default %s', device.description:sub(9)) or
-						t(device.description),
+					title = device.description:sub(1, 7) == 'Default'
+						and t('Default %s', device.description:sub(9))
+						or device.description,
 					hint = hint,
 					active = device.name == current_device,
 					value = device.name,
@@ -1234,7 +1096,7 @@ Manager = {
 ---@param element_ids string|string[]|nil `foo,bar` or `{'foo', 'bar'}`.
 function Manager:disable(client, element_ids)
 	self._disabled_by[client] = comma_split(element_ids)
-	self.disabled = make_set(itable_join(unpack(table_values(self._disabled_by))))
+	self.disabled = create_set(itable_join(unpack(table_values(self._disabled_by))))
 	self:_commit()
 end
 

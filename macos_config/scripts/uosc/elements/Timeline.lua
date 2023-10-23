@@ -47,7 +47,7 @@ function Timeline:update_dimensions()
 	self.top_border = round(options.timeline_border * state.scale)
 	self.line_width = round(options.timeline_line_width * state.scale)
 	self.progress_line_width = round(options.progress_line_width * state.scale)
-	self.font_size = math.floor(math.min((self.size + 60) * 0.2, self.size * 0.96) * options.font_scale)
+	self.font_size = math.floor(math.min((self.size + 60 * state.scale) * 0.2, self.size * 0.96) * options.font_scale)
 	local window_border_size = Elements:v('window_border', 'size', 0)
 	self.ax = window_border_size
 	self.ay = display.height - window_border_size - self.size - self.top_border
@@ -257,10 +257,8 @@ function Timeline:render()
 
 	-- Chapters
 	local hovered_chapter = nil
-	if (config.opacity.chapters > 0
-			and (#state.chapters > 0 or state.ab_loop_a or state.ab_loop_b)
-		) then
-		local diamond_radius = foreground_size < 3 and foreground_size or self.chapter_size
+	if (config.opacity.chapters > 0 and (#state.chapters > 0 or state.ab_loop_a or state.ab_loop_b)) then
+		local diamond_radius = math.min(foreground_size, self.chapter_size)
 		local diamond_radius_hovered = diamond_radius * 2
 		local diamond_border = options.timeline_border and math.max(options.timeline_border, 1) or 1
 

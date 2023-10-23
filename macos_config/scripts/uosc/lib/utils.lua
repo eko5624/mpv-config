@@ -547,6 +547,26 @@ function delete_file(path)
 	})
 end
 
+function delete_file_navigate(delta)
+	local path, playlist_pos = state.path, state.playlist_pos
+	local is_local_file = path and not is_protocol(path)
+
+	if navigate_item(delta) then
+		if state.has_playlist then
+			mp.commandv('playlist-remove', playlist_pos - 1)
+		end
+	else
+		mp.command('stop')
+	end
+
+	if is_local_file then
+		if Menu:is_open('open-file') then
+			Elements:maybe('menu', 'delete_value', path)
+		end
+		delete_file(path)
+	end
+end
+
 function serialize_chapter_ranges(normalized_chapters)
 	local ranges = {}
 	local simple_ranges = {
