@@ -40,9 +40,9 @@ echo "Getting uosc"
 echo "======================="
 git clone https://github.com/tomasklaen/uosc.git --branch main
 rm -rf fonts
-cp -r uosc/dist/fonts ./
-cp -rf uosc/dist/scripts/* scripts
-cp -f uosc/dist/script-opts/uosc.conf script-opts
+cp -r uosc/src/fonts ./
+cp -rf uosc/src/uosc scripts
+cp -f uosc/src/uosc.conf script-opts
 rm -rf uosc
 
 # Change default languages to zh-hans.
