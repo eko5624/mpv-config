@@ -204,8 +204,7 @@ function cursor:move(x, y)
 	end
 
 	-- Add 0.5 to be in the middle of the pixel
-	self.x = x == math.huge and x or x + 0.5
-	self.y = y == math.huge and y or y + 0.5
+	self.x, self.y = x + 0.5, y + 0.5
 
 	if old_x ~= self.x or old_y ~= self.y then
 		if self.x == math.huge or self.y == math.huge then
@@ -228,8 +227,6 @@ function cursor:move(x, y)
 			Elements:update_proximities()
 			Elements:trigger('global_mouse_leave')
 		else
-			Elements:update_proximities()
-
 			if self.hidden then
 				-- Cancel potential fadeouts
 				for _, id in ipairs(config.cursor_leave_fadeout_elements) do
@@ -237,12 +234,12 @@ function cursor:move(x, y)
 				end
 
 				self.hidden = false
-				self.history:clear()
 				Elements:trigger('global_mouse_enter')
-			else
-				-- Update history
-				self.history:insert({x = self.x, y = self.y, time = mp.get_time()})
 			end
+
+			Elements:update_proximities()
+			-- Update history
+			self.history:insert({x = self.x, y = self.y, time = mp.get_time()})
 		end
 
 		Elements:proximity_trigger('mouse_move')
