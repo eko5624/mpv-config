@@ -56,6 +56,9 @@ y)
   if [ ! -L "/usr/local/bin/yt-dlp" ]; then # 如果yt-dlp没加入环境变量
     ln -s ~/.config/mpv/yt-dlp /usr/local/bin
   fi
+  if [ ! -L "/usr/local/mpv" ]; then # 如果mpv没加入环境变量
+    sudo ln -s /Applications/mpv.app/Contents/MacOS/mpv /usr/local
+  fi
 
   echo_result $? "复制文件到 ~/.config/mpv 目录"
   ;;
