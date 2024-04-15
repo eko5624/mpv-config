@@ -20,11 +20,11 @@ set mpv_args=
 :: Get mpv.exe location
 cd /D %~dp0\..
 set mpv_path=%cd%\mpv.exe
-if not exist "%mpv_path%" call :die "mpv.exe ²»ÔÚÉÏ¼¶Ä¿Â¼ÖĞ"
+if not exist "%mpv_path%" call :die "mpv.exe ä¸åœ¨ä¸Šçº§ç›®å½•ä¸­"
 
 :: Get mpv-icon.ico location
 set icon_path=%~dp0mpv-icon.ico
-if not exist "%icon_path%" call :die "mpv-icon.ico ²»ÔÚµ±Ç°Ä¿Â¼ÖĞ"
+if not exist "%icon_path%" call :die "mpv-icon.ico ä¸åœ¨å½“å‰ç›®å½•ä¸­"
 
 :: Register mpv.exe under the "App Paths" key, so it can be found by
 :: ShellExecute, the run command, the start menu, etc.
@@ -176,15 +176,18 @@ call :add_type ""                                 "audio" "CUE Sheet"           
 :: Register "Default Programs" entry
 call :reg add "HKLM\SOFTWARE\RegisteredApplications" /v "mpv" /d "SOFTWARE\Clients\Media\mpv\Capabilities" /f
 
+:: Enable long paths in Windows 10
+call :reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled" /t REG_DWORD /d 1 /f
+
 :: Add start menu link
 powershell "$s=(New-Object -COM WScript.Shell).CreateShortcut('%ProgramData%\Microsoft\Windows\Start Menu\Programs\mpv.lnk');$s.TargetPath='%mpv_path%';$s.Save()"
 
 echo.
-echo ×¢²á³É¹¦£¡
-echo ÏÖÔÚ¿ÉÒÔÊÖ¶¯ÔÚ¿ØÖÆÃæ°åÖĞÑ¡È¡ mpv ÎªÄ¬ÈÏµÄ ¡°ÊÓÆµ²¥·ÅÆ÷¡±
+echo æ³¨å†ŒæˆåŠŸï¼
+echo ç°åœ¨å¯ä»¥æ‰‹åŠ¨åœ¨æ§åˆ¶é¢æ¿ä¸­é€‰å– mpv ä¸ºé»˜è®¤çš„ â€œè§†é¢‘æ’­æ”¾å™¨â€
 echo.
 if [%unattended%] == [yes] exit 0
-<nul set /p =°´ÏÂÈÎÒâ¼ü×ªµ½ ¡°ÏµÍ³ÉèÖÃ-Ä¬ÈÏÓ¦ÓÃ¡± ÉèÖÃÃæ°å . . .
+<nul set /p =æŒ‰ä¸‹ä»»æ„é”®è½¬åˆ° â€œç³»ç»Ÿè®¾ç½®-é»˜è®¤åº”ç”¨â€ è®¾ç½®é¢æ¿ . . .
 pause >nul
 control /name Microsoft.DefaultPrograms
 exit 0
@@ -201,8 +204,8 @@ exit 0
 	:: https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights
 	openfiles >nul 2>&1
 	if errorlevel 1 (
-		echo ¸ÃÅú´¦Àí½Å±¾ĞëÒª¹ÜÀíÔ±È¨ÏŞ
-		echo Ñ¡ÖĞ ¡°mpv-install.bat¡± ÓÒ¼ü ¡°ÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ¡± ÖØĞÂ²Ù×÷
+		echo è¯¥æ‰¹å¤„ç†è„šæœ¬é¡»è¦ç®¡ç†å‘˜æƒé™
+		echo é€‰ä¸­ â€œmpv-install.batâ€ å³é”® â€œä»¥ç®¡ç†å‘˜èº«ä»½è¿è¡Œâ€ é‡æ–°æ“ä½œ
 		call :die
 	)
 	goto :EOF
@@ -292,7 +295,7 @@ exit 0
 	set friendly_name=%~3
 	set extension=%~4
 
-	echo ¹ØÁªÎÄ¼ş¸ñÊ½ "%extension%"
+	echo å…³è”æ–‡ä»¶æ ¼å¼ "%extension%"
 
 	:: Add ProgId
 	set prog_id=io.mpv%extension%
