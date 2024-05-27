@@ -113,6 +113,7 @@ function now()
 end
 
 function command(command)
+    if not command or command == '' then return true end
     return mp.command(command)
 end
 
@@ -224,6 +225,15 @@ function InputEvent:emit(event)
 
     if event == "repeat" and self.on[event] == "ignore" then
         event = "click"
+    end
+
+    if type(self.on[event]) == "table" then
+        for index, value in ipairs(self.on[event]) do
+            if type(value) == "table" then
+                self.on[event][index] = table.concat(value, " ")
+            end
+        end
+        self.on[event] = table.concat(self.on[event], "; ")
     end
 
     local cmd = self.on[event]
