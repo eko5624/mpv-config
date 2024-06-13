@@ -1,4 +1,5 @@
 #!/bin/bash
+shopt -s extglob
 set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
