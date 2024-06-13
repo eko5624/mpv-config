@@ -23,6 +23,16 @@ cd ..
 rm -rf "HDR-Toys v2308"
 rm HDR-Toys.v2308.zip
 
+echo "Getting mpv-menu-plugin"
+echo "======================="
+curl -OL https://github.com/tsl0922/mpv-menu-plugin/releases/latest/download/menu.zip
+unzip menu.zip
+cd menu
+cp ./* ../scripts
+cd ..
+rm -rf menu
+rm menu.zip
+
 echo "Getting thumbfast"
 echo "======================="
 git clone https://github.com/po5/thumbfast.git --branch master
