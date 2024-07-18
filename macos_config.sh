@@ -108,7 +108,7 @@ curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/pla
 mv -f ./playlistmanager.lua scripts
 mv -f ./playlistmanager.conf script-opts
 
-echo "Gettong stats"
+echo "Getting stats"
 echo "============"
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
 mv -f ./stats.conf script-opts
