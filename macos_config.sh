@@ -96,22 +96,28 @@ mv -f ./quality-menu.lua scripts
 curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
 mv -f ./quality-menu.conf script-opts
 
-echo "Getting autoload"
-echo "============"
-curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
-mv -f ./autoload.lua scripts
+#echo "Getting autoload"
+#echo "============"
+#curl -O https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua
+#mv -f ./autoload.lua scripts
 
-echo "Getting mpv playlistmanager"
-echo "============"
-curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.lua
-curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
-mv -f ./playlistmanager.lua scripts
-mv -f ./playlistmanager.conf script-opts
+#echo "Getting mpv playlistmanager"
+#echo "============"
+#curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.lua
+#curl -O https://raw.githubusercontent.com/jonniek/mpv-playlistmanager/master/playlistmanager.conf
+#mv -f ./playlistmanager.lua scripts
+#mv -f ./playlistmanager.conf script-opts
 
-echo "Getting stats"
+echo "Getting images view config"
 echo "============"
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/stats.conf
-mv -f ./stats.conf script-opts
+curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/img_pos.lua
+curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/info_ontop.lua
+curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/minimap.lua
+curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/ruler.lua
+mv -f ./img_pos.lua scripts
+mv -f ./info_ontop.lua scripts
+mv -f ./minimap.lua scripts
+mv -f ./ruler.lua scripts
 
 echo "Getting ytdl_hook"
 echo "============"
