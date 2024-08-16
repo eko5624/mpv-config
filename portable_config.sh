@@ -45,8 +45,8 @@ cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
 
 # Change thumb size from 200px to 360px
-sed -i 's/max_height=200/max_height=360/' script-opts/thumbfast.conf
-sed -i 's/max_width=200/max_width=360/' script-opts/thumbfast.conf
+sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
+sed -i 's/max_width=200/max_width=320/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
@@ -100,8 +100,6 @@ curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/ma
 mv -f ./quality-menu.lua scripts
 curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
 mv -f ./quality-menu.conf script-opts
-curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu-osc.lua
-mv -f ./quality-menu-osc.lua scripts
 
 #echo "Getting autoload"
 #echo "======================="
