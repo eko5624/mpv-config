@@ -116,7 +116,6 @@ mv -f ./quality-menu.conf script-opts
 echo "Getting images view config"
 echo "============"
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/img_pos.lua
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/info_ontop.lua
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/minimap.lua
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/ruler.lua
 mv -f ./img_pos.lua scripts
