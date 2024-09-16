@@ -114,7 +114,6 @@ curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/minimap.lua
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/ruler.lua
 mv -f ./img_pos.lua scripts
-mv -f ./info_ontop.lua scripts
 mv -f ./minimap.lua scripts
 mv -f ./ruler.lua scripts
 
