@@ -13,6 +13,8 @@ cd $DIR/macos_config
 echo "Getting thumbfast"
 echo "============"
 git clone https://github.com/po5/thumbfast.git --branch master
+curl -O https://raw.githubusercontent.com/po5/thumbfast/vanilla-osc/player/lua/osc.lua
+mv -f ./osc.lua scripts
 cp -f thumbfast/thumbfast.lua scripts  
 cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
