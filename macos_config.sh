@@ -34,6 +34,7 @@ cp -f ModernZ/modernz.lua scripts
 cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
 cp -f ModernZ/modernz.conf script-opts
 cp -f ModernZ/extras/locale/modernz-locale.json script-opts
+rm -rf ModernZ
 
 #Change ModernZ language from en to zh
 sed -i 's/language=en/language=zh/' script-opts/modernz.conf
