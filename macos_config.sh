@@ -28,7 +28,7 @@ sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
 echo "Getting ModernZ"
 echo "============"
-git clone https://github.com/Samillion/ModernZ.git --branch master
+git clone https://github.com/Samillion/ModernZ.git --branch main
 cp -f ModernZ/fluent-system-icons.ttf fonts
 cp -f ModernZ/modernz.lua scripts
 cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
