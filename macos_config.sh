@@ -21,8 +21,8 @@ cp -f thumbfast/thumbfast.conf script-opts
 rm -rf thumbfast
 
 #Change thumb size from 200px to 360px
-sed -i 's/max_height=200/max_height=350/' script-opts/thumbfast.conf
-sed -i 's/max_width=200/max_width=350/' script-opts/thumbfast.conf
+sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
+sed -i 's/max_width=200/max_width=320/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 

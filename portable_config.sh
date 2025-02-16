@@ -10,6 +10,7 @@ rm -rf $DIR/portable_config/scripts
 rm -rf $DIR/portable_config/shaders
 mkdir -p $DIR/portable_config/script-opts
 mkdir -p $DIR/portable_config/scripts
+mkdir -p $DIR/portable_config/fonts
 
 cd $DIR/portable_config
 
@@ -49,6 +50,19 @@ sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
 sed -i 's/max_width=200/max_width=320/' script-opts/thumbfast.conf
 sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
+
+echo "Getting ModernZ"
+echo "============"
+git clone https://github.com/Samillion/ModernZ.git --branch main
+cp -f ModernZ/fluent-system-icons.ttf fonts
+cp -f ModernZ/modernz.lua scripts
+cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
+cp -f ModernZ/modernz.conf script-opts
+cp -f ModernZ/extras/locale/modernz-locale.json script-opts
+rm -rf ModernZ
+
+#Change ModernZ language from en to zh
+sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 
 #echo "Getting uosc"
 #echo "======================="
