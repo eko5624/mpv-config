@@ -72,14 +72,25 @@ mv -f ./quality-menu.conf script-opts
 #mv -f ./playlistmanager.lua scripts
 #mv -f ./playlistmanager.conf script-opts
 
-echo "Getting images view config"
+#echo "Getting images view config"
+#echo "============"
+#curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/img_pos.lua
+#curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/minimap.lua
+#curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/ruler.lua
+#mv -f ./img_pos.lua scripts
+#mv -f ./minimap.lua scripts
+#mv -f ./ruler.lua scripts
+
+echo "Getting mpv-image-config"
 echo "============"
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/img_pos.lua
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/minimap.lua
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/img/portable_config/scripts/ruler.lua
-mv -f ./img_pos.lua scripts
-mv -f ./minimap.lua scripts
-mv -f ./ruler.lua scripts
+curl -O https://github.com/guidocella/mpv-image-config/blob/main/scripts/align-images.lua
+curl -O https://github.com/guidocella/mpv-image-config/blob/main/scripts/image-bindings.lua
+curl -O https://github.com/guidocella/mpv-image-config/blob/main/script-opts/align_images.conf
+curl -O https://github.com/guidocella/mpv-image-config/blob/main/script-opts/image_bindings.conf
+mv -f ./align-images.lua scripts
+mv -f ./image-bindings.lua scripts
+mv -f ./align_images.conf script-opts
+mv -f ./image_bindings.conf script-opts
 
 echo "Getting ytdl_hook"
 echo "============"
