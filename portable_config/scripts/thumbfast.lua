@@ -68,9 +68,9 @@ function subprocess(args, async, callback)
 
     if not pre_0_30_0 then
         if async then
-            return mp.command_native_async({name = "subprocess", playback_only = true, args = args, env = "PATH="..os.getenv("PATH")}, callback)
+            return mp.command_native_async({name = "subprocess", playback_only = true, args = args}, callback)
         else
-            return mp.command_native({name = "subprocess", playback_only = false, capture_stdout = true, args = args, env = "PATH="..os.getenv("PATH")})
+            return mp.command_native({name = "subprocess", playback_only = false, capture_stdout = true, args = args})
         end
     else
         if async then
@@ -458,19 +458,16 @@ local function spawn(time)
     has_vid = vid or 0
 
     local args = {
-        mpv_path, "--no-config", "--msg-level=all=no", "--idle", "--ao=null", "--pause", "--keep-open=always", "--really-quiet", "--no-terminal",
-        "--load-scripts=no", "--osc=no", "--ytdl=no", "--load-stats-overlay=no",
-        "--load-auto-profiles=no", "--load-osd-console=no", "--load-select=no", "--autoload-files=no",
+        mpv_path, "--no-config", "--msg-level=all=no", "--idle", "--pause", "--keep-open=always", "--really-quiet", "--no-terminal",
+        "--load-scripts=no", "--osc=no", "--ytdl=no", "--load-stats-overlay=no", "--load-osd-console=no", "--load-auto-profiles=no",
         "--edition="..(properties["edition"] or "auto"), "--vid="..(vid or "auto"), "--no-sub", "--no-audio",
         "--start="..time, allow_fast_seek and "--hr-seek=no" or "--hr-seek=yes",
-        "--gpu-dumb-mode=yes", "--dither-depth=no", "--hdr-compute-peak=no", "--target-colorspace-hint=no",
         "--ytdl-format=worst", "--demuxer-readahead-secs=0", "--demuxer-max-bytes=128KiB",
-        "--vd-lavc-skiploopfilter=all", "--vd-lavc-skipidct=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2",
-        "--hwdec="..(options.hwdec and "auto" or "no"),
-        "--vf="..vf_string(filters_all, true), "--audio-pitch-correction=no", "--deinterlace=no",
-        "--zimg-scaler=bilinear", "--zimg-fast=yes",
+        "--vd-lavc-skiploopfilter=all", "--vd-lavc-software-fallback=1", "--vd-lavc-fast", "--vd-lavc-threads=2", "--hwdec="..(options.hwdec and "auto" or "no"),
+        "--vf="..vf_string(filters_all, true),
+        "--sws-scaler=fast-bilinear",
         "--video-rotate="..last_rotate,
-        "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--ocopy-metadata=no", "--o="..options.thumbnail
+        "--ovc=rawvideo", "--of=image2", "--ofopts=update=1", "--o="..options.thumbnail
     }
 
     if not pre_0_30_0 then

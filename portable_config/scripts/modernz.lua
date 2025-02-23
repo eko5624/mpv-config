@@ -39,6 +39,7 @@ local user_opts = {
     bottomhover = true,                    -- show OSC only when hovering at the bottom
     bottomhover_zone = 130,                -- height of hover zone for bottomhover (in pixels)
     osc_on_seek = false,                   -- show OSC when seeking
+    osc_on_start = false,                  -- show OSC on start of every file
     mouse_seek_pause = true,               -- pause video while seeking with mouse move (on button hold)
     force_seek_tooltip = false,            -- force show seekbar tooltip on mouse drag, even if not hovering seekbar
 
@@ -255,6 +256,9 @@ local user_opts = {
     -- fullscreen button mouse actions
     fullscreen_mbtn_left_command = "cycle fullscreen",
     fullscreen_mbtn_right_command = "cycle window-maximized",
+
+    -- info button mouse actions
+    info_mbtn_left_command = "script-binding stats/display-page-1-toggle",
 }
 
 mp.observe_property("osc", "bool", function(name, value) if value == true then mp.set_property("osc", "no") end end)
@@ -2492,7 +2496,7 @@ local function osc_init()
     ne.tooltip_style = osc_styles.tooltip
     ne.tooltipF = user_opts.tooltip_hints and locale.stats_info or ""
     ne.visible = (osc_param.playresx >= 650 - outeroffset - (user_opts.fullscreen_button and 0 or 100))
-    ne.eventresponder["mbtn_left_up"] = function () mp.commandv("script-binding", "stats/display-page-1-toggle") end
+    ne.eventresponder["mbtn_left_up"] = command_callback(user_opts.info_mbtn_left_command)
 
     --tog_ontop
     ne = new_element("tog_ontop", "button")
@@ -2806,18 +2810,13 @@ local function osc_init()
     ne.content = function()
         local playback_time = mp.get_property_number("playback-time", 0)
 
-        -- force request_init() once to update time codes width hitbox
-        -- run once when less than hour, once again if hour or more
-        -- since request_init() is expensive, this is a measure to call it when needed only
+        -- call request_init() only when needed to update time code width
         if user_opts.time_format ~= "fixed" and playback_time then
-            if playback_time >= 3600 and not state.playtime_hour_force_init then
+            local hour_or_more = playback_time >= 3600
+            if hour_or_more ~= state.playtime_hour_force_init then
                 request_init()
-                state.playtime_hour_force_init = true
-                state.playtime_nohour_force_init = false
-            elseif playback_time < 3600 and not state.playtime_nohour_force_init then
-                request_init()
-                state.playtime_hour_force_init = false
-                state.playtime_nohour_force_init = true
+                state.playtime_hour_force_init = hour_or_more
+                state.playtime_nohour_force_init = not hour_or_more
             end
         end
 
@@ -3340,6 +3339,9 @@ mp.register_event("file-loaded", function()
        else
             user_opts.seekbarkeyframes = false
        end
+    end
+    if user_opts.osc_on_start then
+        show_osc()
     end
 end)
 mp.register_event("start-file", request_init)
