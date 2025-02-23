@@ -140,10 +140,10 @@ mv -f ./quality-menu.conf script-opts
 
 echo "Getting mpv-image-config"
 echo "============"
-curl -O https://github.com/guidocella/mpv-image-config/blob/main/scripts/align-images.lua
-curl -O https://github.com/guidocella/mpv-image-config/blob/main/scripts/image-bindings.lua
-curl -O https://github.com/guidocella/mpv-image-config/blob/main/script-opts/align_images.conf
-curl -O https://github.com/guidocella/mpv-image-config/blob/main/script-opts/image_bindings.conf
+curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/scripts/align-images.lua
+curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/scripts/image-bindings.lua
+curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/script-opts/align_images.conf
+curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/script-opts/image_bindings.conf
 mv -f ./align-images.lua scripts
 mv -f ./image-bindings.lua scripts
 mv -f ./align_images.conf script-opts
