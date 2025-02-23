@@ -38,12 +38,14 @@ rm menu.zip
 
 echo "Getting thumbfast"
 echo "======================="
-git clone https://github.com/po5/thumbfast.git --branch master
 #curl -O https://raw.githubusercontent.com/po5/thumbfast/vanilla-osc/player/lua/osc.lua
-#mv -f ./osc.lua scripts
-cp -f thumbfast/thumbfast.lua scripts  
-cp -f thumbfast/thumbfast.conf script-opts
-rm -rf thumbfast
+#curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.lua
+
+# clamp to f1fdf10b17f394f2d42520d0e9bf22feaa20a9f4 ,because mpv subprocess create failed on Windows
+curl -O https://raw.githubusercontent.com/po5/thumbfast/f1fdf10b17f394f2d42520d0e9bf22feaa20a9f4/thumbfast.lua
+curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.conf
+mv -f ./thumbfast.lua scripts
+mv -f ./thumbfast.conf script-opts
 
 # Change thumb size from 200px to 360px
 sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf

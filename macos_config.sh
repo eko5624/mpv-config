@@ -13,12 +13,13 @@ mkdir -p $DIR/macos_config/fonts
 cd $DIR/macos_config
 echo "Getting thumbfast"
 echo "============"
-git clone https://github.com/po5/thumbfast.git --branch master
 #curl -O https://raw.githubusercontent.com/po5/thumbfast/vanilla-osc/player/lua/osc.lua
 #mv -f ./osc.lua scripts
-cp -f thumbfast/thumbfast.lua scripts  
-cp -f thumbfast/thumbfast.conf script-opts
-rm -rf thumbfast
+
+curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.lua
+curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.conf
+mv -f ./thumbfast.lua scripts
+mv -f ./thumbfast.conf script-opts
 
 #Change thumb size from 200px to 360px
 sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
