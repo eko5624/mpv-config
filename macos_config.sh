@@ -82,17 +82,6 @@ mv -f ./quality-menu.conf script-opts
 #mv -f ./minimap.lua scripts
 #mv -f ./ruler.lua scripts
 
-echo "Getting mpv-image-config"
-echo "============"
-curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/scripts/align-images.lua
-curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/scripts/image-bindings.lua
-curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/script-opts/align_images.conf
-curl -O https://raw.githubusercontent.com/guidocella/mpv-image-config/refs/heads/main/script-opts/image_bindings.conf
-mv -f ./align-images.lua scripts
-mv -f ./image-bindings.lua scripts
-mv -f ./align_images.conf script-opts
-mv -f ./image_bindings.conf script-opts
-
 echo "Getting ytdl_hook"
 echo "============"
 curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/ytdl_hook.conf
