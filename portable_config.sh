@@ -16,15 +16,15 @@ cd $DIR/portable_config
 
 echo "Getting HDR Toys"
 echo "======================="
-curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/releases/download/v2401/HDR-Toys.v2401.zip
-unzip HDR-Toys.v2401.zip
-cd "HDR-Toys v2401"
-cp -f scripts/hdr-toys-helper.lua ../scripts
+curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/archive/refs/heads/master.zip
+unzip hdr-toys-master.zip
+cd "hdr-toys-master"
+cp -f scripts/hdr-toys.lua ../scripts
 cp -f hdr-toys.conf ../
 cp -rf shaders ../
 cd ..
-rm -rf "HDR-Toys v2401"
-rm HDR-Toys.v2401.zip
+rm -rf "hdr-toys-master"
+rm master.zip
 
 echo "Getting mpv-menu-plugin"
 echo "======================="
