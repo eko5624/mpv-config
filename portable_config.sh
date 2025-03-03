@@ -17,7 +17,7 @@ cd $DIR/portable_config
 echo "Getting HDR Toys"
 echo "======================="
 curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/archive/refs/heads/master.zip
-unzip hdr-toys-master.zip
+unzip master.zip
 cd "hdr-toys-master"
 cp -f scripts/hdr-toys.lua ../scripts
 cp -f hdr-toys.conf ../
