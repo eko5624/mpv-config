@@ -1,28 +1,28 @@
+// https://www.itu.int/rec/R-REC-BT.1886
+
 //!HOOK OUTPUT
 //!BIND HOOKED
 //!DESC transfer function (bt.1886, inverse)
 
-const float GAMMA = 2.4;
-const float L_W = 1.0;
-const float L_B = 0.0;
-
-// The reference EOTF specified in Rec. ITU-R BT.1886
-// L = a(max[(V+b),0])^g
-float bt1886_f(float V, float gamma, float Lw, float Lb) {
+float bt1886_eotf(float V, float gamma, float Lw, float Lb) {
     float a = pow(pow(Lw, 1.0 / gamma) - pow(Lb, 1.0 / gamma), gamma);
     float b = pow(Lb, 1.0 / gamma) / (pow(Lw, 1.0 / gamma) - pow(Lb, 1.0 / gamma));
     float L = a * pow(max(V + b, 0.0), gamma);
     return L;
 }
 
-vec4 hook() {
-    vec4 color = HOOKED_texOff(0);
-
-    color.rgb = vec3(
-        bt1886_f(color.r, GAMMA, L_W, L_B),
-        bt1886_f(color.g, GAMMA, L_W, L_B),
-        bt1886_f(color.b, GAMMA, L_W, L_B)
+vec3 bt1886_eotf(vec3 color, float gamma, float Lw, float Lb) {
+    return vec3(
+        bt1886_eotf(color.r, gamma, Lw, Lb),
+        bt1886_eotf(color.g, gamma, Lw, Lb),
+        bt1886_eotf(color.b, gamma, Lw, Lb)
     );
+}
+
+vec4 hook() {
+    vec4 color = HOOKED_tex(HOOKED_pos);
+
+    color.rgb = bt1886_eotf(color.rgb, 2.4, 1.0, 0.001);
 
     return color;
 }

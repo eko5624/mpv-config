@@ -1,156 +1,105 @@
-// Invert colors that are out of gamut
-
-//!PARAM L_sdr
-//!TYPE float
-//!MINIMUM 0
-//!MAXIMUM 1000
-203.0
+// Visualizes the out of gamut colors using false color.
 
 //!HOOK OUTPUT
 //!BIND HOOKED
 //!DESC gamut mapping (false color)
 
-const float pq_m1 = 0.1593017578125;
-const float pq_m2 = 78.84375;
-const float pq_c1 = 0.8359375;
-const float pq_c2 = 18.8515625;
-const float pq_c3 = 18.6875;
+// BT.2020 to BT.709
+mat3 M = mat3(
+     1.66049100210843540, -0.58764113878854950,  -0.072849863319884740,
+    -0.12455047452159074,  1.13289989712595960,  -0.008349422604369515,
+    -0.01815076335490526, -0.10057889800800737,   1.118729661362913000
+);
 
-const float pq_C  = 10000.0;
-
-float Y_to_ST2084(float C) {
-    float L = C / pq_C;
-    float Lm = pow(L, pq_m1);
-    float N = (pq_c1 + pq_c2 * Lm) / (1.0 + pq_c3 * Lm);
-    N = pow(N, pq_m2);
-    return N;
+float cbrt(float x) {
+    return sign(x) * pow(abs(x), 1.0 / 3.0);
 }
 
-float ST2084_to_Y(float N) {
-    float Np = pow(N, 1.0 / pq_m2);
-    float L = Np - pq_c1;
-    if (L < 0.0 ) L = 0.0;
-    L = L / (pq_c2 - pq_c3 * Np);
-    L = pow(L, 1.0 / pq_m1);
-    return L * pq_C;
+vec3 cbrt(vec3 color) {
+    return vec3(
+        cbrt(color.x),
+        cbrt(color.y),
+        cbrt(color.z)
+    );
 }
 
 vec3 RGB_to_XYZ(vec3 RGB) {
-    mat3 M = mat3(
+    return RGB * mat3(
         0.6369580483012914, 0.14461690358620832,  0.1688809751641721,
         0.2627002120112671, 0.6779980715188708,   0.05930171646986196,
-        0.000000000000000,  0.028072693049087428, 1.060985057710791);
-    return RGB * M;
+        0.000000000000000,  0.028072693049087428, 1.060985057710791
+    );
 }
 
 vec3 XYZ_to_RGB(vec3 XYZ) {
-    mat3 M = mat3(
+    return XYZ * mat3(
          1.716651187971268,  -0.355670783776392, -0.253366281373660,
         -0.666684351832489,   1.616481236634939,  0.0157685458139111,
-         0.017639857445311,  -0.042770613257809,  0.942103121235474);
-    return XYZ * M;
+         0.017639857445311,  -0.042770613257809,  0.942103121235474
+    );
 }
 
-vec3 XYZ_to_Cone(vec3 XYZ) {
-    mat3 M = mat3(
-         0.41478972, 0.579999,  0.0146480,
-        -0.2015100,  1.120649,  0.0531008,
-        -0.0166008,  0.264800,  0.6684799);
-    return XYZ * M;
+vec3 XYZ_to_LMS(vec3 XYZ) {
+    return XYZ * mat3(
+        0.8190224379967030, 0.3619062600528904, -0.1288737815209879,
+        0.0329836539323885, 0.9292868615863434,  0.0361446663506424,
+        0.0481771893596242, 0.2642395317527308,  0.6335478284694309
+    );
 }
 
-vec3 Cone_to_XYZ(vec3 LMS) {
-    mat3 M = mat3(
-         1.9242264357876067,  -1.0047923125953657,  0.037651404030618,
-         0.35031676209499907,  0.7264811939316552, -0.06538442294808501,
-        -0.09098281098284752, -0.3127282905230739,  1.5227665613052603);
-    return LMS * M;
+vec3 LMS_to_XYZ(vec3 LMS) {
+    return LMS * mat3(
+         1.2268798758459243, -0.5578149944602171,  0.2813910456659647,
+        -0.0405757452148008,  1.1122868032803170, -0.0717110580655164,
+        -0.0763729366746601, -0.4214933324022432,  1.5869240198367816
+    );
 }
 
-vec3 Cone_to_Iab(vec3 LMS) {
-    mat3 M = mat3(
-        0.5,       0.5,       0.0,
-        3.524000, -4.066708,  0.542708,
-        0.199076,  1.096799, -1.295875);
-    return LMS * M;
+vec3 LMS_to_Lab(vec3 LMS) {
+    return LMS * mat3(
+        0.2104542683093140,  0.7936177747023054, -0.0040720430116193,
+        1.9779985324311684, -2.4285922420485799,  0.4505937096174110,
+        0.0259040424655478,  0.7827717124575296, -0.8086757549230774
+    );
 }
 
-vec3 Iab_to_Cone(vec3 Iab) {
-    mat3 M = mat3(
-        1.0,                 0.1386050432715393,   0.05804731615611886,
-        0.9999999999999999, -0.1386050432715393,  -0.05804731615611886,
-        0.9999999999999998, -0.09601924202631895, -0.8118918960560388);
-    return Iab * M;
+vec3 Lab_to_LMS(vec3 Lab) {
+    return Lab * mat3(
+        1.0000000000000000,  0.3963377773761749,  0.2158037573099136,
+        1.0000000000000000, -0.1055613458156586, -0.0638541728258133,
+        1.0000000000000000, -0.0894841775298119, -1.2914855480194092
+    );
 }
 
-const float b = 1.15;
-const float g = 0.66;
-
-const float d = -0.56;
-const float d0 = 1.6295499532821566e-11;
-
-vec3 RGB_to_Jzazbz(vec3 color) {
-    color *= L_sdr;
-
+vec3 RGB_to_Lab(vec3 color) {
     color = RGB_to_XYZ(color);
-
-    float Xm = (b * color.x) - ((b - 1.0) * color.z);
-    float Ym = (g * color.y) - ((g - 1.0) * color.x);
-
-    color = XYZ_to_Cone(vec3(Xm, Ym, color.z));
-
-    color.r = Y_to_ST2084(color.r);
-    color.g = Y_to_ST2084(color.g);
-    color.b = Y_to_ST2084(color.b);
-
-    color = Cone_to_Iab(color);
-
-    color.r = ((1.0 + d) * color.r) / (1.0 + (d * color.r)) - d0;
-
+    color = XYZ_to_LMS(color);
+    color = cbrt(color);
+    color = LMS_to_Lab(color);
     return color;
 }
 
-vec3 Jzazbz_to_RGB(vec3 color) {
-    color.r = (color.r + d0) / (1.0 + d - d * (color.r + d0));
-
-    color = Iab_to_Cone(color);
-
-    color.r = ST2084_to_Y(color.r);
-    color.g = ST2084_to_Y(color.g);
-    color.b = ST2084_to_Y(color.b);
-
-    color = Cone_to_XYZ(color);
-
-    float Xa = (color.x + ((b - 1.0) * color.z)) / b;
-    float Ya = (color.y + ((g - 1.0) * Xa)) / g;
-
-    color = XYZ_to_RGB(vec3(Xa, Ya, color.z));
-
-    color /= L_sdr;
-
+vec3 Lab_to_RGB(vec3 color) {
+    color = Lab_to_LMS(color);
+    color = vec3(pow(color.r, 3.0), pow(color.g, 3.0), pow(color.b, 3.0));
+    color = LMS_to_XYZ(color);
+    color = XYZ_to_RGB(color);
     return color;
 }
-
-mat3 M = mat3(
-     1.6604910021084354,  -0.5876411387885495,  -0.07284986331988474,
-    -0.12455047452159074,  1.1328998971259596,  -0.008349422604369515,
-    -0.01815076335490526, -0.10057889800800737,  1.118729661362913);
 
 vec4 hook() {
-    vec4 color = HOOKED_texOff(0);
+    vec4 color = HOOKED_tex(HOOKED_pos);
 
     vec3 color_dst = color.rgb * M;
     vec3 color_dst_cliped = clamp(color_dst, 0.0, 1.0);
 
-    if (color_dst != color_dst_cliped) {
-        color.rgb = RGB_to_Jzazbz(color.rgb);
-        color.yz  = -color.yz;
-        color.rgb = Jzazbz_to_RGB(color.rgb);
-        color.rgb = color.rgb * M;
-        return color;
-    }
-
-    color.rgb = color_dst_cliped;
+    color.rgb = RGB_to_Lab(color.rgb);
+    if (color_dst == color_dst_cliped)
+        color.yz = vec2(0.0);
+    else
+        color.x = 0.5;
+    color.rgb = Lab_to_RGB(color.rgb);
+    color.rgb = color.rgb * M;
 
     return color;
 }

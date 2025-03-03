@@ -1,25 +1,31 @@
+// https://github.com/ampas/aces-core/blob/dev/lib/Lib.Academy.DisplayEncoding.ctl
+// moncurve with gamma of 2.4 and offset of 0.055 matches the EOTF found in IEC 61966-2-1:1999 (sRGB)
+
 //!HOOK OUTPUT
 //!BIND HOOKED
 //!DESC transfer function (srgb, inverse)
 
-const float GAMMA  = 2.4;
-const float OFFSET = 0.055;
+const float gamma = 2.4;
+const float offset = 0.055;
 
-// moncurve_r with gamma of 2.4 and offset of 0.055 matches the EOTF found in IEC 61966-2-1:1999 (sRGB)
-float moncurve_f(float x, float gamma, float offs) {
-    const float fs = ((gamma - 1.0) / offs) * pow(offs * gamma / ((gamma - 1.0) * (1.0 + offs)), gamma);
-    const float xb = offs / (gamma - 1.0);
-    return x >= xb ? pow((x + offs) / (1.0 + offs), gamma) : x * fs;
+float monitor_curve_eotf(float x) {
+    const float fs = ((gamma - 1.0) / offset) * pow(offset * gamma / ((gamma - 1.0) * (1.0 + offset)), gamma);
+    const float xb = offset / (gamma - 1.0);
+    return x >= xb ? pow((x + offset) / (1.0 + offset), gamma) : x * fs;
+}
+
+vec3 monitor_curve_eotf(vec3 color) {
+    return vec3(
+        monitor_curve_eotf(color.r),
+        monitor_curve_eotf(color.g),
+        monitor_curve_eotf(color.b)
+    );
 }
 
 vec4 hook() {
-    vec4 color = HOOKED_texOff(0);
+    vec4 color = HOOKED_tex(HOOKED_pos);
 
-    color.rgb = vec3(
-        moncurve_f(color.r, GAMMA, OFFSET),
-        moncurve_f(color.g, GAMMA, OFFSET),
-        moncurve_f(color.b, GAMMA, OFFSET)
-    );
+    color.rgb = monitor_curve_eotf(color.rgb);
 
     return color;
 }

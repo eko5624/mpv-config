@@ -4,10 +4,18 @@
 //!BIND HOOKED
 //!DESC signal invert
 
-vec4 hook() {
-    vec4 color = HOOKED_texOff(0);
+float invert(float x, float w) {
+    return -x + w;
+}
 
-    color.rgb = 1.0 - color.rgb;
+vec3 invert(vec3 x, float w) {
+    return -x + w;
+}
+
+vec4 hook() {
+    vec4 color = HOOKED_tex(HOOKED_pos);
+
+    color.rgb = invert(color.rgb, 1.0);
 
     return color;
 }
