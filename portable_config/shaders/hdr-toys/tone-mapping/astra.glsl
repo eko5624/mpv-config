@@ -3,6 +3,7 @@
 // shoulder segment: http://filmicworlds.com/blog/filmic-tonemapping-with-piecewise-power-curves/
 // toe segment: https://technorgb.blogspot.com/2018/02/hyperbola-tone-mapping.html
 // working space: https://doi.org/10.1364/OE.25.015131
+// hk effect: https://doi.org/10.1364/OE.534073
 // chroma correction: https://www.itu.int/pub/R-REP-BT.2408
 // dynamic metadata: https://github.com/mpv-player/mpv/pull/15239
 // fast gaussian blur: https://www.rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
@@ -57,7 +58,13 @@
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 1.0
-0.8
+0.75
+
+//!PARAM hk_effect_compensate_scaling
+//!TYPE float
+//!MINIMUM 0.0
+//!MAXIMUM 1.0
+1.0
 
 //!PARAM chroma_correction_scaling
 //!TYPE float
@@ -683,9 +690,9 @@ vec3 LMS_to_Iab(vec3 LMS) {
 
 vec3 Iab_to_LMS(vec3 Iab) {
     return Iab * mat3(
-        1.0,                 0.1386050432715393,   0.05804731615611886,
-        0.9999999999999999, -0.1386050432715393,  -0.05804731615611886,
-        0.9999999999999998, -0.09601924202631895, -0.8118918960560388
+        1.0,  0.1386050432715393,  0.0580473161561189,
+        1.0, -0.1386050432715393, -0.0580473161561189,
+        1.0, -0.0960192420263190, -0.8118918960560390
     );
 }
 
@@ -700,6 +707,67 @@ float J_to_I(float J) {
     return (J + d0) / (1.0 + d - d * (J + d0));
 }
 
+float hke_fh_hellwig(float h, float a1, float a2, float a3, float a4, float a5) {
+    return a1 * cos(h) + a2 * cos(2.0 * h) + a3 * sin(h) + a4 * sin(2.0 * h) + a5;
+}
+
+float hke_fh_high(float h, float k1, float k2, float k3, float k4) {
+    h = mod(mod(degrees(h), 360.0) + 360.0, 360.0);
+    float by = k1 * abs(sin(radians((h - 90.0)/ 2.0))) + k2;
+    float r  = h <= 90.0 || h >= 270.0 ? k3 * abs(cos(radians(h))) + k4 : 0.0;
+    return by + r;
+}
+
+float hke_fh_liao(float h, float k3, float k4, float k5) {
+    h = mod(mod(degrees(h), 360.0) + 360.0, 360.0);
+    return k3 * abs(log(((h + k4) / (90.0 + k4)))) + k5;
+}
+
+float hke_fh(float h) {
+    float result = hke_fh_liao(h, 0.3495, 45.0, 0.1567);
+    return result * hk_effect_compensate_scaling;
+}
+
+float J_to_Jhk(vec3 JCh) {
+    float J = JCh.x;
+    float C = JCh.y;
+    float h = JCh.z;
+    return J + C * hke_fh(h);
+}
+
+float Jhk_to_J(vec3 JCh) {
+    float J = JCh.x;
+    float C = JCh.y;
+    float h = JCh.z;
+    return J - C * hke_fh(h);
+}
+
+// https://github.com/color-js/color.js/pull/629
+const float epsilon = 0.0002363;
+
+vec3 Lab_to_LCh(vec3 Lab) {
+    float L = Lab.x;
+    float a = Lab.y;
+    float b = Lab.z;
+
+    float C = length(vec2(a, b));
+    float h = (abs(a) < epsilon && abs(b) < epsilon) ? 0.0 : atan(b, a);
+
+    return vec3(L, C, h);
+}
+
+vec3 LCh_to_Lab(vec3 LCh) {
+    float L = LCh.x;
+    float C = LCh.y;
+    float h = LCh.z;
+
+    C = max(C, 0.0);
+    float a = C * cos(h);
+    float b = C * sin(h);
+
+    return vec3(L, a, b);
+}
+
 vec3 RGB_to_Jab(vec3 color) {
     color *= reference_white;
     color = RGB_to_XYZ(color);
@@ -708,10 +776,12 @@ vec3 RGB_to_Jab(vec3 color) {
     color = pq_eotf_inv(color);
     color = LMS_to_Iab(color);
     color.x = I_to_J(color.x);
+    color.x = J_to_Jhk(Lab_to_LCh(color));
     return color;
 }
 
 vec3 Jab_to_RGB(vec3 color) {
+    color.x = Jhk_to_J(Lab_to_LCh(color));
     color.x = J_to_I(color.x);
     color = Iab_to_LMS(color);
     color = pq_eotf(color);
