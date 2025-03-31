@@ -99,7 +99,7 @@ vec3 RGB_to_Lab(vec3 color) {
 
 vec3 Lab_to_RGB(vec3 color) {
     color = Lab_to_LMS(color);
-    color = vec3(pow(color.r, 3.0), pow(color.g, 3.0), pow(color.b, 3.0));
+    color = pow(color, vec3(3.0));
     color = LMS_to_XYZ(color);
     color = XYZ_to_RGB(color);
     return color;
@@ -107,27 +107,27 @@ vec3 Lab_to_RGB(vec3 color) {
 
 const float epsilon = 1e-6;
 
-vec3 Lab_to_LCH(vec3 Lab) {
+vec3 Lab_to_LCh(vec3 Lab) {
+    float L = Lab.x;
     float a = Lab.y;
     float b = Lab.z;
 
     float C = length(vec2(a, b));
-    float H = 0.0;
+    float h = (abs(a) < epsilon && abs(b) < epsilon) ? 0.0 : atan(b, a);
 
-    if (!(abs(a) < epsilon && abs(b) < epsilon))
-        H = atan(b, a);
-
-    return vec3(Lab.x, C, H);
+    return vec3(L, C, h);
 }
 
-vec3 LCH_to_Lab(vec3 LCH) {
-    float C = max(LCH.y, 0.0);
-    float H = LCH.z;
+vec3 LCh_to_Lab(vec3 LCh) {
+    float L = LCh.x;
+    float C = LCh.y;
+    float h = LCh.z;
 
-    float a = C * cos(H);
-    float b = C * sin(H);
+    C = max(C, 0.0);
+    float a = C * cos(h);
+    float b = C * sin(h);
 
-    return vec3(LCH.x, a, b);
+    return vec3(L, a, b);
 }
 
 float l(float x, float a, float b) {
@@ -157,13 +157,13 @@ vec4 hook() {
     vec3 c0 = vec3(0.20104, 0.16, radians(350.0));
     vec3 cb = vec3(0.13040, 0.08, radians(350.0));
 
-    if      (y > l5)    color.rgb = Lab_to_RGB(LCH_to_Lab(cw));
-    else if (y > l4)    color.rgb = Lab_to_RGB(LCH_to_Lab(mix(c4, c5, l(y, l4, l5))));
-    else if (y > l3)    color.rgb = Lab_to_RGB(LCH_to_Lab(mix(c3, c4, l(y, l3, l4))));
-    else if (y > l2)    color.rgb = Lab_to_RGB(LCH_to_Lab(mix(c2, c3, l(y, l2, l3))));
-    else if (y > l1)    color.rgb = Lab_to_RGB(LCH_to_Lab(mix(c1, c2, l(y, l1, l2))));
+    if      (y > l5)    color.rgb = Lab_to_RGB(LCh_to_Lab(cw));
+    else if (y > l4)    color.rgb = Lab_to_RGB(LCh_to_Lab(mix(c4, c5, l(y, l4, l5))));
+    else if (y > l3)    color.rgb = Lab_to_RGB(LCh_to_Lab(mix(c3, c4, l(y, l3, l4))));
+    else if (y > l2)    color.rgb = Lab_to_RGB(LCh_to_Lab(mix(c2, c3, l(y, l2, l3))));
+    else if (y > l1)    color.rgb = Lab_to_RGB(LCh_to_Lab(mix(c1, c2, l(y, l1, l2))));
     else if (y > l0)    color.rgb = vec3(l(y, l0, l1));
-    else                color.rgb = Lab_to_RGB(LCH_to_Lab(mix(cb, c0, l(y, lb, l0))));
+    else                color.rgb = Lab_to_RGB(LCh_to_Lab(mix(cb, c0, l(y, lb, l0))));
 
     return color;
 }
@@ -266,7 +266,7 @@ vec3 RGB_to_Lab(vec3 color) {
 
 vec3 Lab_to_RGB(vec3 color) {
     color = Lab_to_LMS(color);
-    color = vec3(pow(color.r, 3.0), pow(color.g, 3.0), pow(color.b, 3.0));
+    color = pow(color, vec3(3.0));
     color = LMS_to_XYZ(color);
     color = XYZ_to_RGB(color);
     return color;
@@ -274,27 +274,27 @@ vec3 Lab_to_RGB(vec3 color) {
 
 const float epsilon = 1e-6;
 
-vec3 Lab_to_LCH(vec3 Lab) {
+vec3 Lab_to_LCh(vec3 Lab) {
+    float L = Lab.x;
     float a = Lab.y;
     float b = Lab.z;
 
     float C = length(vec2(a, b));
-    float H = 0.0;
+    float h = (abs(a) < epsilon && abs(b) < epsilon) ? 0.0 : atan(b, a);
 
-    if (!(abs(a) < epsilon && abs(b) < epsilon))
-        H = atan(b, a);
-
-    return vec3(Lab.x, C, H);
+    return vec3(L, C, h);
 }
 
-vec3 LCH_to_Lab(vec3 LCH) {
-    float C = max(LCH.y, 0.0);
-    float H = LCH.z;
+vec3 LCh_to_Lab(vec3 LCh) {
+    float L = LCh.x;
+    float C = LCh.y;
+    float h = LCh.z;
 
-    float a = C * cos(H);
-    float b = C * sin(H);
+    C = max(C, 0.0);
+    float a = C * cos(h);
+    float b = C * sin(h);
 
-    return vec3(LCH.x, a, b);
+    return vec3(L, a, b);
 }
 
 vec4 hook() {
@@ -302,24 +302,24 @@ vec4 hook() {
 
     float stops = log2(max(RGB_to_XYZ(color.rgb).y, 1e-6) / 0.18);
 
-    if      (stops >=  7.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.99500, 0.00, radians(000.0))));
-    else if (stops >=  6.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.94659, 0.11, radians(005.0))));
-    else if (stops >=  5.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.89269, 0.22, radians(015.0))));
-    else if (stops >=  4.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.83878, 0.33, radians(025.0))));
-    else if (stops >=  3.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.78487, 0.11, radians(060.0))));
-    else if (stops >=  2.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.73097, 0.33, radians(090.0))));
-    else if (stops >=  1.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.67706, 0.22, radians(105.0))));
-    else if (stops >=  0.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.62315, 0.11, radians(120.0))));
-    else if (stops >= -0.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.56925, 0.00, radians(000.0))));
-    else if (stops >= -1.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.52324, 0.33, radians(130.0))));
-    else if (stops >= -2.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.47724, 0.22, radians(145.0))));
-    else if (stops >= -3.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.43123, 0.11, radians(160.0))));
-    else if (stops >= -4.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.38523, 0.32, radians(220.0))));
-    else if (stops >= -5.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.33922, 0.24, radians(245.0))));
-    else if (stops >= -6.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.29322, 0.24, radians(290.0))));
-    else if (stops >= -7.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.24721, 0.16, radians(320.0))));
-    else if (stops >= -8.5) color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.20104, 0.08, radians(350.0))));
-    else                    color.rgb = Lab_to_RGB(LCH_to_Lab(vec3(0.13040, 0.00, radians(000.0))));
+    if      (stops >=  7.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.99500, 0.00, radians(000.0))));
+    else if (stops >=  6.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.94659, 0.11, radians(005.0))));
+    else if (stops >=  5.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.89269, 0.22, radians(015.0))));
+    else if (stops >=  4.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.83878, 0.33, radians(025.0))));
+    else if (stops >=  3.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.78487, 0.11, radians(060.0))));
+    else if (stops >=  2.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.73097, 0.33, radians(090.0))));
+    else if (stops >=  1.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.67706, 0.22, radians(105.0))));
+    else if (stops >=  0.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.62315, 0.11, radians(120.0))));
+    else if (stops >= -0.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.56925, 0.00, radians(000.0))));
+    else if (stops >= -1.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.52324, 0.33, radians(130.0))));
+    else if (stops >= -2.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.47724, 0.22, radians(145.0))));
+    else if (stops >= -3.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.43123, 0.11, radians(160.0))));
+    else if (stops >= -4.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.38523, 0.32, radians(220.0))));
+    else if (stops >= -5.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.33922, 0.24, radians(245.0))));
+    else if (stops >= -6.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.29322, 0.24, radians(290.0))));
+    else if (stops >= -7.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.24721, 0.16, radians(320.0))));
+    else if (stops >= -8.5) color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.20104, 0.08, radians(350.0))));
+    else                    color.rgb = Lab_to_RGB(LCh_to_Lab(vec3(0.13040, 0.00, radians(000.0))));
 
     return color;
 }
