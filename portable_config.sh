@@ -14,17 +14,17 @@ mkdir -p $DIR/portable_config/fonts
 
 cd $DIR/portable_config
 
-echo "Getting HDR Toys"
-echo "======================="
-curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/archive/refs/heads/master.zip
-unzip master.zip
-cd "hdr-toys-master"
-cp -f scripts/hdr-toys.lua ../scripts
-cp -f hdr-toys.conf ../
-cp -rf shaders ../
-cd ..
-rm -rf "hdr-toys-master"
-rm master.zip
+#echo "Getting HDR Toys"
+#echo "======================="
+#curl -OL https://github.com/natural-harmonia-gropius/hdr-toys/archive/refs/heads/master.zip
+#unzip master.zip
+#cd "hdr-toys-master"
+#cp -f scripts/hdr-toys.lua ../scripts
+#cp -f hdr-toys.conf ../
+#cp -rf shaders ../
+#cd ..
+#rm -rf "hdr-toys-master"
+#rm master.zip
 
 echo "Getting mpv-menu-plugin"
 echo "======================="
@@ -36,35 +36,32 @@ cd ..
 rm -rf menu
 rm menu.zip
 
-echo "Getting thumbfast"
-echo "======================="
-#curl -O https://raw.githubusercontent.com/po5/thumbfast/vanilla-osc/player/lua/osc.lua
-#curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.lua
-
+#echo "Getting thumbfast"
+#echo "======================="
 # clamp to f1fdf10b17f394f2d42520d0e9bf22feaa20a9f4 ,because mpv subprocess create failed on Windows
-curl -O https://raw.githubusercontent.com/po5/thumbfast/f1fdf10b17f394f2d42520d0e9bf22feaa20a9f4/thumbfast.lua
-curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.conf
-mv -f ./thumbfast.lua scripts
-mv -f ./thumbfast.conf script-opts
+#curl -O https://raw.githubusercontent.com/po5/thumbfast/f1fdf10b17f394f2d42520d0e9bf22feaa20a9f4/thumbfast.lua
+#curl -O https://raw.githubusercontent.com/po5/thumbfast/refs/heads/master/thumbfast.conf
+#mv -f ./thumbfast.lua scripts
+#mv -f ./thumbfast.conf script-opts
 
 # Change thumb size from 200px to 360px
-sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
-sed -i 's/max_width=200/max_width=320/' script-opts/thumbfast.conf
-sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
-sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
+#sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
+#sed -i 's/max_width=200/max_width=320/' script-opts/thumbfast.conf
+#sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
+#sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
-echo "Getting ModernZ"
-echo "============"
-git clone https://github.com/Samillion/ModernZ.git --branch main
-cp -f ModernZ/fluent-system-icons.ttf fonts
-cp -f ModernZ/modernz.lua scripts
-cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
-cp -f ModernZ/modernz.conf script-opts
-cp -f ModernZ/extras/locale/modernz-locale.json script-opts
-rm -rf ModernZ
+#echo "Getting ModernZ"
+#echo "============"
+#git clone https://github.com/Samillion/ModernZ.git --branch main
+#cp -f ModernZ/fluent-system-icons.ttf fonts
+#cp -f ModernZ/modernz.lua scripts
+#cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
+#cp -f ModernZ/modernz.conf script-opts
+#cp -f ModernZ/extras/locale/modernz-locale.json script-opts
+#rm -rf ModernZ
 
 #Change ModernZ language from en to zh
-sed -i 's/language=en/language=zh/' script-opts/modernz.conf
+#sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 
 #echo "Getting uosc"
 #echo "======================="
@@ -97,13 +94,6 @@ sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 # Add 'play/pause' 'stats' buttons.
 #sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc/elements/Controls.lua
 #sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc/elements/Controls.lua
-
-echo "Getting SmartCopyPaste_II.lua"
-echo "======================="
-curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
-curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
-mv -f ./SmartCopyPaste_II.lua scripts
-mv -f ./SmartCopyPaste_II.conf script-opts
 
 echo "Getting InputEvent"
 echo "======================="
