@@ -20,6 +20,7 @@ local utils = require "mp.utils"
 local user_opts = {
     -- Language and display
     language = "en",                       -- set language (for available options, see: https://github.com/Samillion/ModernZ/blob/main/docs/TRANSLATIONS.md)
+    icon_theme = "fluent",                 -- set icon theme. accepts "fluent" or "material"
     font = "mpv-osd-symbols",              -- font for the OSC (default: mpv-osd-symbols or the one set in mpv.conf)
 
     idlescreen = true,                     -- show mpv logo when idle
@@ -278,50 +279,99 @@ local osc_param = {                  -- calculated by osc_init()
     },
 }
 
-local icons = {
-    window = {
-        maximize = "\238\159\171",
-        unmaximize = "\238\174\150",
-        minimize = "\238\175\144",
-        close = "\239\141\169",
+local icon_theme = {
+    ["fluent"] = {
+        iconfont = "fluent-system-icons",
+        window = {
+            maximize = "\238\159\171",
+            unmaximize = "\238\174\150",
+            minimize = "\238\175\144",
+            close = "\239\141\169",
+        },
+        audio = "\238\175\139",
+        subtitle = "\238\175\141",
+        playlist = "\238\161\159",
+        menu = "\238\160\170",
+        volume_mute = "\238\173\138",
+        volume_quiet = "\238\172\184",
+        volume_low = "\238\172\189",
+        volume_high = "\238\173\130",
+
+        play = "\238\166\143",
+        pause = "\238\163\140",
+        replay = "\238\189\191",
+        previous = "\239\152\167",
+        next = "\239\149\168",
+        rewind = "\238\168\158",
+        forward = "\238\152\135",
+        jump = {
+            [5] = {"\238\171\186", "\238\171\187"},
+            [10] = {"\238\171\188", "\238\172\129"},
+            [30] = {"\238\172\133", "\238\172\134"},
+            default = {"\238\172\138", "\238\172\138"}, -- second icon is mirrored in layout()
+        },
+
+        fullscreen = "\239\133\160",
+        fullscreen_exit = "\239\133\166",
+        info = "\239\146\164",
+        ontop_on = "\238\165\190",
+        ontop_off = "\238\166\129",
+        screenshot = "\238\169\150",
+        loop_off = "\239\133\178",
+        loop_on = "\239\133\181",
+        speed = "\239\160\177",
+        download = "\239\133\144",
+        downloading = "\239\140\174",
+
+        zoom_in = "\238\186\142",
+        zoom_out = "\238\186\143",
     },
-    audio = "\238\175\139",
-    subtitle = "\238\175\141",
-    playlist = "\238\161\159",
-    menu = "\238\160\170",
-    volume_mute = "\238\173\138",
-    volume_quiet = "\238\172\184",
-    volume_low = "\238\172\189",
-    volume_high = "\238\173\130",
+    ["material"] = {
+        iconfont = "Material Design Icons",
+        window = {
+            maximize = '\243\176\150\175',
+            unmaximize = '\243\176\150\178',
+            minimize = '\243\176\150\176',
+            close = '\243\176\150\173',
+        },
+        audio = '\243\176\151\133',
+        subtitle = '\243\176\168\150',
+        playlist = '\243\176\141\156', -- this icon is better suited as a generic menu button
+        menu = '\243\176\149\178', -- this icon would be better suited for playlists
+        volume_mute = '\243\176\184\136',
+        volume_quiet = '\243\176\149\191',
+        volume_low = '\243\176\150\128',
+        volume_high = '\243\176\149\190',
 
-    play = "\238\166\143",
-    pause = "\238\163\140",
-    replay = "\238\189\191",
-    previous = "\239\152\167",
-    next = "\239\149\168",
-    rewind = "\238\168\158",
-    forward = "\238\152\135",
-    jump = {
-        [5] = {"\238\171\186", "\238\171\187"},
-        [10] = {"\238\171\188", "\238\172\129"},
-        [30] = {"\238\172\133", "\238\172\134"},
-        default = {"\238\172\138", "\238\172\138"}, -- second icon is mirrored in layout()
+        play = '\243\176\144\138',
+        pause = '\243\176\143\164',
+        replay = '\243\176\145\153',
+        previous = '\243\176\146\171',
+        next = '\243\176\146\172',
+        rewind = '\243\176\145\159',
+        forward = '\243\176\136\145',
+        jump = {
+            [5] = {'\243\176\135\185', '\243\176\135\184'},
+            [10] = {'\243\176\180\170', '\243\176\181\177'},
+            [30] = {'\243\176\182\150', '\243\176\180\134'},
+            default = {'\243\176\147\151', '\243\176\147\151'}, -- first would be '\243\176\147\149' but icon is mirrored in layout()
+        },
+
+        fullscreen = '\243\176\138\147',
+        fullscreen_exit = '\243\176\138\148',
+        info = '\243\176\139\189',
+        ontop_on = '\243\176\144\131',
+        ontop_off = '\243\176\164\176',
+        screenshot = '\243\176\132\128',
+        loop_off = '\243\176\145\151',
+        loop_on = '\243\176\145\150',
+        speed = '\243\176\163\191',
+        download = '\243\176\129\136',
+        downloading = '\243\176\166\151',
+
+        zoom_in = '\243\176\155\173',
+        zoom_out = '\243\176\155\172',
     },
-
-    fullscreen = "\239\133\160",
-    fullscreen_exit = "\239\133\166",
-    info = "\239\146\164",
-    ontop_on = "\238\165\190",
-    ontop_off = "\238\166\129",
-    screenshot = "\238\169\150",
-    loop_off = "\239\133\178",
-    loop_on = "\239\133\181",
-    speed = "\239\160\177",
-    download = "\239\133\144",
-    downloading = "\239\140\174",
-
-    zoom_in = "\238\186\142",
-    zoom_out = "\238\186\143",
 }
 
 --- localization
@@ -406,6 +456,14 @@ if external then
     end
 end
 
+
+local icons
+local iconfont
+local function set_icon_theme()
+    icons = icon_theme[user_opts.icon_theme] or icon_theme["fluent"]
+    iconfont = icons.iconfont
+end
+
 local locale
 local function set_osc_locale()
     locale = language[user_opts.language] or language["en"]
@@ -441,7 +499,6 @@ local sub_track_count = 0
 local window_control_box_width = 150
 local is_december = os.date("*t").month == 12
 local UNICODE_MINUS = string.char(0xe2, 0x88, 0x92)  -- UTF-8 for U+2212 MINUS SIGN
-local iconfont = "fluent-system-icons"
 
 local function osc_color_convert(color)
     return color:sub(6,7) .. color:sub(4,5) ..  color:sub(2,3)
@@ -524,7 +581,8 @@ local state = {
     playtime_nohour_force_init = false,     -- used to force request_init() once
     playing_and_seeking = false,
     persistent_progress_toggle = user_opts.persistentprogress,
-    original_subpos = mp.get_property_number("sub-pos") or 100,
+    user_subpos = mp.get_property_number("sub-pos") or 100,
+    osc_adjusted_subpos = nil,
     downloaded_once = false,
     downloading = false,
     file_size_bytes = 0,
@@ -2080,33 +2138,40 @@ end
 local function adjust_subtitles(visible)
     if not mp.get_property_native("sid") then return end
 
-    local scale
-    if state.fullscreen then
-        scale = user_opts.scalefullscreen
-    else
-        scale = user_opts.scalewindowed
-    end
+    local scale = state.fullscreen and user_opts.scalefullscreen or user_opts.scalewindowed
 
     if visible and user_opts.raise_subtitles and state.osc_visible == true then
         local w, h = mp.get_osd_size()
         if h > 0 then
             local raise_factor = user_opts.raise_subtitle_amount
 
-            -- adjust for extreme scales
+            -- adjust for scale
             if scale > 1 then
-                raise_factor = raise_factor * (1 + (scale - 1) * 0.2)  -- slight increase when scale > 1
+                raise_factor = raise_factor * (1 + (scale - 1) * 0.2)
             elseif scale < 1 then
-                raise_factor = raise_factor * (0.8 + (scale - 0.5) * 0.5)  -- slight decrease when scale < 1
+                raise_factor = raise_factor * (0.8 + (scale - 0.5) * 0.5)
             end
 
-            local adjusted_subpos = math.floor((osc_param.playresy - raise_factor) / osc_param.playresy * 100)
-            if adjusted_subpos < 0 then
-                adjusted_subpos = state.original_subpos -- original position if out of bounds
+            -- raise percentage
+            local raise_percent = (raise_factor / osc_param.playresy) * 100
+
+            -- don't adjust if user's sub-pos is higher than the raise factor
+            if state.user_subpos >= (100 - raise_percent) then
+                local adjusted = math.floor((osc_param.playresy - raise_factor) / osc_param.playresy * 100)
+                if adjusted < 0 then adjusted = state.user_subpos end
+
+                state.osc_adjusted_subpos = adjusted
+                mp.set_property_number("sub-pos", adjusted)
+            else
+                state.osc_adjusted_subpos = nil
             end
-            mp.commandv("set", "sub-pos", adjusted_subpos)
         end
     elseif user_opts.raise_subtitles then
-        mp.commandv("set", "sub-pos", state.original_subpos)
+        -- restore user's original subtitle position
+        if state.user_subpos then
+            mp.set_property_number("sub-pos", state.user_subpos)
+        end
+        state.osc_adjusted_subpos = nil
     end
 end
 
@@ -3454,6 +3519,13 @@ mp.observe_property("loop-file", "bool", function(_, val)
         state.looping = false
     end
 end)
+mp.observe_property("sub-pos", "native", function(_, value)
+    if value == nil then return end
+
+    if state.osc_adjusted_subpos == nil or value ~= state.osc_adjusted_subpos then
+        state.user_subpos = value
+    end
+end)
 
 -- mouse show/hide bindings
 mp.set_key_bindings({
@@ -3693,6 +3765,7 @@ end
 opt.read_options(user_opts, "modernz", function(changed)
     validate_user_opts()
     set_osc_locale()
+    set_icon_theme()
     set_osc_styles()
     set_time_styles(changed.timetotal, changed.timems)
     if changed.tick_delay or changed.tick_delay_follow_display_fps then
@@ -3706,6 +3779,7 @@ end)
 
 validate_user_opts()
 set_osc_locale()
+set_icon_theme()
 set_osc_styles()
 set_time_styles(true, true)
 set_tick_delay("display_fps", mp.get_property_number("display_fps"))
