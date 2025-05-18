@@ -50,18 +50,18 @@ rm menu.zip
 #sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 #sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
 
-echo "Getting ModernZ"
-echo "============"
-git clone https://github.com/Samillion/ModernZ.git --branch main
-cp -f ModernZ/fluent-system-icons.ttf fonts
-cp -f ModernZ/modernz.lua scripts
-cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
-cp -f ModernZ/modernz.conf script-opts
-cp -f ModernZ/extras/locale/modernz-locale.json script-opts
-rm -rf ModernZ
+#echo "Getting ModernZ"
+#echo "============"
+#git clone https://github.com/Samillion/ModernZ.git --branch main
+#cp -f ModernZ/fluent-system-icons.ttf fonts
+#cp -f ModernZ/modernz.lua scripts
+#cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
+#cp -f ModernZ/modernz.conf script-opts
+#cp -f ModernZ/extras/locale/modernz-locale.json script-opts
+#rm -rf ModernZ
 
 #Change ModernZ language from en to zh
-sed -i 's/language=en/language=zh/' script-opts/modernz.conf
+#sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 
 #echo "Getting uosc"
 #echo "======================="
