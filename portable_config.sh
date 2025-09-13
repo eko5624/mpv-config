@@ -5,8 +5,8 @@ set -ex
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 rm -rf $DIR/portable_config/fonts
-rm -rf $DIR/portable_config/script-opts/!("dyn_menu.conf")
-rm -rf $DIR/portable_config/scripts
+rm -rf $DIR/portable_config/script-opts/!("dyn_menu.conf|info_ontop.conf")
+rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
 rm -rf $DIR/portable_config/shaders
 mkdir -p $DIR/portable_config/script-opts
 mkdir -p $DIR/portable_config/scripts

@@ -4,8 +4,8 @@ set -ex
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 rm $DIR/macos_config/yt-dlp
 rm -rf $DIR/macos_config/fonts
-rm -rf $DIR/macos_config/script-opts
-rm -rf $DIR/macos_config/scripts
+rm -rf $DIR/portable_config/script-opts/!("info_ontop.conf")
+rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
 mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
 mkdir -p $DIR/macos_config/fonts
