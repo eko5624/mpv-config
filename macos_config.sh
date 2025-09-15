@@ -1,14 +1,12 @@
 #!/bin/bash
+shopt -s extglob
 set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 rm $DIR/macos_config/yt-dlp
-rm -rf $DIR/macos_config/fonts
-rm -rf $DIR/portable_config/script-opts/!("info_ontop.conf")
 rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
 mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
-mkdir -p $DIR/macos_config/fonts
 
 cd $DIR/macos_config
 #echo "Getting thumbfast"
@@ -81,11 +79,6 @@ mv -f ./quality-menu.conf script-opts
 #mv -f ./img_pos.lua scripts
 #mv -f ./minimap.lua scripts
 #mv -f ./ruler.lua scripts
-
-echo "Getting ytdl_hook"
-echo "============"
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/ytdl_hook.conf
-mv -f ./ytdl_hook.conf script-opts
 
 echo "Getting yt-dlp"
 echo "======================="

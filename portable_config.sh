@@ -4,13 +4,9 @@ set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-rm -rf $DIR/portable_config/fonts
-rm -rf $DIR/portable_config/script-opts/!("dyn_menu.conf|info_ontop.conf")
 rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
-rm -rf $DIR/portable_config/shaders
 mkdir -p $DIR/portable_config/script-opts
 mkdir -p $DIR/portable_config/scripts
-mkdir -p $DIR/portable_config/fonts
 
 cd $DIR/portable_config
 
@@ -127,8 +123,3 @@ mv -f ./quality-menu.conf script-opts
 #mv -f ./img_pos.lua scripts
 #mv -f ./minimap.lua scripts
 #mv -f ./ruler.lua scripts
-
-echo "Getting ytdl_hook"
-echo "======================="
-curl -O https://raw.githubusercontent.com/hooke007/MPV_lazy/main/portable_config/script-opts/ytdl_hook.conf
-mv -f ./ytdl_hook.conf script-opts
