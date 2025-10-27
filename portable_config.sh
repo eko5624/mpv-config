@@ -24,7 +24,7 @@ cd $DIR/portable_config
 
 echo "Getting mpv-menu-plugin"
 echo "======================="
-curl -OL https://github.com/tsl0922/mpv-menu-plugin/releases/latest/download/menu.zip
+curl -OL https://github.com/eko5624/mpv-win64/releases/latest/download/mpv-menu-plugin-x86_64.7z
 unzip menu.zip
 cd menu
 cp ./* ../scripts
