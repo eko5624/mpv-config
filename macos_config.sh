@@ -3,7 +3,7 @@ shopt -s extglob
 set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-rm $DIR/macos_config/yt-dlp
+rm $DIR/macos_config/yt-dlp || true
 mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
 

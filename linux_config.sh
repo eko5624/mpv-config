@@ -3,7 +3,7 @@ shopt -s extglob
 set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-rm $DIR/linux_config/yt-dlp
+rm $DIR/linux_config/yt-dlp || true
 mkdir -p $DIR/linux_config/script-opts
 mkdir -p $DIR/linux_config/scripts
 
@@ -30,19 +30,16 @@ cp -f uosc/src/uosc.conf script-opts
 rm -rf uosc
 
 # Change default languages to zh-hans.
-sed -i 's/languages=slang,en/languages=zh-hans/' script-opts/uosc.conf
+#sed -i 's/languages=slang,en/languages=zh-hans/' script-opts/uosc.conf
 
 # Enable autoload.
-sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
+#sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
 
 # Don't dim screen when menu triggered.
-sed -i 's/opacity=/opacity=curtain=0/' script-opts/uosc.conf
+#sed -i 's/opacity=/opacity=curtain=0/' script-opts/uosc.conf
 
 # Don't show timeline when paused.
-sed -i 's/timeline_persistency=paused/timeline_persistency=idle,audio/' script-opts/uosc.conf
-
-# Change the highth of timeline to 40pixels when in fullscreen.
-sed -i 's/timeline_size_max_fullscreen=60/timeline_size_max_fullscreen=40/' script-opts/uosc.conf
+#sed -i 's/timeline_persistency=paused/timeline_persistency=idle,audio/' script-opts/uosc.conf
 
 # Add 'stats' 'open file' 'prev/next chapter' 'chapter' buttons.
 sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
