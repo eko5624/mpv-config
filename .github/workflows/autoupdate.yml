@@ -24,6 +24,8 @@ jobs:
     - name: Update
       shell: bash
       run: |
+        chmod +x ./*.sh
+        ./linux_config.sh
         ./macos_config.sh
         ./portable_config.sh
         git add -A
