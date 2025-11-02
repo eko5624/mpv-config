@@ -4,7 +4,6 @@ set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 rm $DIR/macos_config/yt-dlp
-rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
 mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
 
