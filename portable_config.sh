@@ -5,6 +5,7 @@ set -ex
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
+mkdir -p $DIR/portable_config/fonts
 mkdir -p $DIR/portable_config/script-opts
 mkdir -p $DIR/portable_config/scripts
 
