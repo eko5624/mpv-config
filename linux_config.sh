@@ -24,16 +24,19 @@ cp -f uosc/src/uosc.conf script-opts
 rm -rf uosc
 
 # Change default languages to zh-hans.
-#sed -i 's/languages=slang,en/languages=zh-hans/' script-opts/uosc.conf
+sed -i 's/languages=slang,en/languages=zh-hans/' script-opts/uosc.conf
+
+# Change timeline size to 30
+sed -i 's/timeline_size=40/timeline_size=30/' script-opts/uosc.conf
 
 # Enable autoload.
-#sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
+sed -i 's/autoload=no/autoload=yes/' script-opts/uosc.conf
 
 # Don't dim screen when menu triggered.
-#sed -i 's/opacity=/opacity=curtain=0/' script-opts/uosc.conf
+sed -i 's/opacity=/opacity=curtain=0/' script-opts/uosc.conf
 
 # Don't show timeline when paused.
-#sed -i 's/timeline_persistency=paused/timeline_persistency=idle,audio/' script-opts/uosc.conf
+sed -i 's/timeline_persistency=/timeline_persistency=idle,audio/' script-opts/uosc.conf
 
 # Add 'stats' 'open file' 'prev/next chapter' 'chapter' buttons.
 sed -i 's/menu,gap/menu,script-stats,open-file,gap,<has_chapter>command:skip_previous:add chapter -1?上一章节,play_pause,<has_chapter>command:skip_next:add chapter 1?下一章节,<has_chapter>chapters,gap/' script-opts/uosc.conf
@@ -47,6 +50,7 @@ sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-bindin
 #echo "============"
 #git clone https://github.com/Samillion/ModernZ.git --branch main
 #cp -f ModernZ/fluent-system-icons.ttf fonts
+#cp -f ModernZ/material-design-icons.ttf fonts
 #cp -f ModernZ/modernz.lua scripts
 #cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
 #cp -f ModernZ/modernz.conf script-opts

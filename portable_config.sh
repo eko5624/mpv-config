@@ -41,6 +41,7 @@ echo "Getting ModernZ"
 echo "============"
 git clone https://github.com/Samillion/ModernZ.git --branch main
 cp -f ModernZ/fluent-system-icons.ttf fonts
+cp -f ModernZ/material-design-icons.ttf fonts
 cp -f ModernZ/modernz.lua scripts
 cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
 cp -f ModernZ/modernz.conf script-opts
