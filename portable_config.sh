@@ -5,11 +5,37 @@ set -ex
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 rm -rf $DIR/portable_config/scripts/!("info_ontop.lua")
+rm -rf $DIR/portable_config/scripts-opts/!("info_ontop.conf")
 mkdir -p $DIR/portable_config/fonts
 mkdir -p $DIR/portable_config/script-opts
 mkdir -p $DIR/portable_config/scripts
-
 cd $DIR/portable_config
+
+echo "Getting ModernZ"
+echo "============"
+git clone https://github.com/Samillion/ModernZ.git --branch main
+cp -f ModernZ/fluent-system-icons.ttf fonts
+cp -f ModernZ/material-design-icons.ttf fonts
+cp -f ModernZ/modernz.lua scripts
+cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
+cp -f ModernZ/modernz.conf script-opts
+cp -f ModernZ/extras/locale/modernz-locale.json script-opts
+rm -rf ModernZ
+
+# Change ModernZ language from en to zh
+sed -i 's/language=en/language=zh/' script-opts/modernz.conf
+
+echo "Getting InputEvent"
+echo "======================="
+curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
+mv -f ./inputevent.lua scripts
+
+echo "Getting quality menu"
+echo "======================="
+curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
+mv -f ./quality-menu.lua scripts
+curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
+mv -f ./quality-menu.conf script-opts
 
 #echo "Getting HDR Toys"
 #echo "======================="
@@ -31,25 +57,11 @@ cd $DIR/portable_config
 #mv -f ./thumbfast.lua scripts
 #mv -f ./thumbfast.conf script-opts
 
-# Change thumb size from 200px to 360px
-#sed -i 's/max_height=200/max_height=320/' script-opts/thumbfast.conf
+# Change thumb size from 200px to 240px
+#sed -i 's/max_height=200/max_height=240/' script-opts/thumbfast.conf
 #sed -i 's/max_width=200/max_width=320/' script-opts/thumbfast.conf
 #sed -i 's/hwdec=no/hwdec=yes/' script-opts/thumbfast.conf
 #sed -i 's/direct_io=no/direct_io=yes/' script-opts/thumbfast.conf
-
-echo "Getting ModernZ"
-echo "============"
-git clone https://github.com/Samillion/ModernZ.git --branch main
-cp -f ModernZ/fluent-system-icons.ttf fonts
-cp -f ModernZ/material-design-icons.ttf fonts
-cp -f ModernZ/modernz.lua scripts
-cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
-cp -f ModernZ/modernz.conf script-opts
-cp -f ModernZ/extras/locale/modernz-locale.json script-opts
-rm -rf ModernZ
-
-#Change ModernZ language from en to zh
-sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 
 #echo "Getting uosc"
 #echo "======================="
@@ -82,15 +94,3 @@ sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 # Add 'play/pause' 'stats' buttons.
 #sed -i "/subtitles =/i \\\t\t['play_pause'] = 'cycle:play_arrow:pause:no=pause\/yes=play_arrow?播放\/暂停'," scripts/uosc/elements/Controls.lua
 #sed -i "/subtitles =/a \\\t\t['script-stats'] = 'command:analytics:script-binding stats/display-stats-toggle?统计数据'," scripts/uosc/elements/Controls.lua
-
-echo "Getting InputEvent"
-echo "======================="
-curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
-mv -f ./inputevent.lua scripts
-
-echo "Getting quality menu"
-echo "======================="
-curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
-mv -f ./quality-menu.lua scripts
-curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
-mv -f ./quality-menu.conf script-opts

@@ -3,11 +3,40 @@ shopt -s extglob
 set -ex
 
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+rm -rf $DIR/macos_config/scripts/!("info_ontop.lua")
+rm -rf $DIR/macos_config/scripts-opts/!("info_ontop.conf")
 rm $DIR/macos_config/yt-dlp || true
 mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
-
 cd $DIR/macos_config
+
+echo "Getting SmartCopyPaste_II"
+echo "============"
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
+curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
+mv -f ./SmartCopyPaste_II.lua scripts
+mv -f ./SmartCopyPaste_II.conf script-opts
+sed -i 's/🕒/⧗/' script-opts/SmartCopyPaste_II.conf
+sed -i 's/📋/✂︎/' script-opts/SmartCopyPaste_II.conf
+
+echo "Getting InputEvent"
+echo "============"
+curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
+mv -f ./inputevent.lua scripts
+
+echo "Getting quality menu"
+echo "============"
+curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
+mv -f ./quality-menu.lua scripts
+curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
+mv -f ./quality-menu.conf script-opts
+
+echo "Getting yt-dlp"
+echo "======================="
+curl -OL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+chmod +x yt-dlp
+
 #echo "Getting thumbfast"
 #echo "============"
 #curl -O https://raw.githubusercontent.com/po5/thumbfast/vanilla-osc/player/lua/osc.lua
@@ -36,29 +65,3 @@ cd $DIR/macos_config
 
 #Change ModernZ language from en to zh
 #sed -i 's/language=en/language=zh/' script-opts/modernz.conf
-
-echo "Getting SmartCopyPaste_II"
-echo "============"
-curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/scripts/SmartCopyPaste_II.lua 
-curl -O https://raw.githubusercontent.com/Eisa01/mpv-scripts/master/script-opts/SmartCopyPaste_II.conf 
-mv -f ./SmartCopyPaste_II.lua scripts
-mv -f ./SmartCopyPaste_II.conf script-opts
-sed -i 's/🕒/⧗/' script-opts/SmartCopyPaste_II.conf
-sed -i 's/📋/✂︎/' script-opts/SmartCopyPaste_II.conf
-
-echo "Getting InputEvent"
-echo "============"
-curl -O https://raw.githubusercontent.com/Natural-Harmonia-Gropius/InputEvent/master/inputevent.lua
-mv -f ./inputevent.lua scripts
-
-echo "Getting quality menu"
-echo "============"
-curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.lua
-mv -f ./quality-menu.lua scripts
-curl -O https://raw.githubusercontent.com/christoph-heinrich/mpv-quality-menu/master/quality-menu.conf
-mv -f ./quality-menu.conf script-opts
-
-echo "Getting yt-dlp"
-echo "======================="
-curl -OL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
-chmod +x yt-dlp
