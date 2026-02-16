@@ -179,6 +179,8 @@ local user_opts = {
     nibbles_top = true,                    -- top chapter nibbles above seekbar
     nibbles_bottom = true,                 -- bottom chapter nibbles below seekbar
     nibbles_style = "triangle",            -- chapter nibble style. "triangle", "bar", or "single-bar"
+    nibble_color = "#FB8C00",              -- color of chapter nibbles on the seekbar
+    nibble_current_color = "#FFFFFF",      -- color of the current chapter nibble on the seekbar
 
     automatickeyframemode = true,          -- automatically set keyframes for the seekbar based on video length
     automatickeyframelimit = 600,          -- videos longer than this (in seconds) will have keyframes on the seekbar
@@ -1005,52 +1007,7 @@ local function prepare_elements()
             -- a hack which prepares the whole slider area to allow center placements such like an=5
             static_ass:rect_cw(0, 0, elem_geo.w, elem_geo.h)
             static_ass:rect_ccw(0, 0, elem_geo.w, elem_geo.h)
-            -- marker nibbles
-            if element.slider.markerF ~= nil and slider_lo.gap > 0 then
-                local markers = element.slider.markerF()
-                for _,marker in pairs(markers) do
-                    if marker >= element.slider.min.value and
-                    marker <= element.slider.max.value then
-                        local s = get_slider_ele_pos_for(element, marker)
-                        if slider_lo.gap > 5 then -- draw triangles / bars
-                            local bar_h = 3 -- for "bar" and "single-bar" only
-                            --top
-                            if slider_lo.nibbles_top then
-                                if slider_lo.nibbles_style == "triangle" then
-                                    static_ass:move_to(s - 3, slider_lo.gap - 5)
-                                    static_ass:line_to(s + 3, slider_lo.gap - 5)
-                                    static_ass:line_to(s, slider_lo.gap - 1)
-                                elseif slider_lo.nibbles_style == "bar" then
-                                    static_ass:rect_cw(s - 1, slider_lo.gap - bar_h, s + 1, slider_lo.gap);
-                                else
-                                    static_ass:rect_cw(s - 1, slider_lo.gap - bar_h, s + 1, elem_geo.h - slider_lo.gap);
-                                end
-                            end
-                            --bottom
-                            if slider_lo.nibbles_bottom then
-                                if slider_lo.nibbles_style == "triangle" then
-                                    static_ass:move_to(s - 3, elem_geo.h - slider_lo.gap + 5)
-                                    static_ass:line_to(s, elem_geo.h - slider_lo.gap + 1)
-                                    static_ass:line_to(s + 3, elem_geo.h - slider_lo.gap + 5)
-                                elseif slider_lo.nibbles_style == "bar" then
-                                    static_ass:rect_cw(s - 1, elem_geo.h - slider_lo.gap, s + 1, elem_geo.h - slider_lo.gap + bar_h);
-                                else
-                                    static_ass:rect_cw(s - 1, slider_lo.gap, s + 1, elem_geo.h - slider_lo.gap + bar_h);
-                                end
-                            end
-                        else -- draw 2x1px nibbles
-                            --top
-                            if slider_lo.nibbles_top then
-                                static_ass:rect_cw(s - 1, 0, s + 1, slider_lo.gap);
-                            end
-                            --bottom
-                            if slider_lo.nibbles_bottom then
-                                static_ass:rect_cw(s - 1, elem_geo.h - slider_lo.gap, s + 1, elem_geo.h);
-                            end
-                        end
-                    end
-                end
-            end
+            -- marker nibbles are drawn dynamically in draw_seekbar_nibbles()
         end
 
         element.static_ass = static_ass
@@ -1166,6 +1123,89 @@ local function draw_seekbar_ranges(element, elem_ass, xp, rh, override_alpha)
     end
 end
 
+-- Draw chapter nibbles on the seekbar with per-chapter coloring
+local function draw_seekbar_nibbles(element, elem_ass)
+    local slider_lo = element.layout.slider
+    local elem_geo = element.layout.geometry
+
+    if element.slider.markerF == nil or slider_lo.gap <= 0 then
+        return
+    end
+
+    local markers = element.slider.markerF()
+    if #markers == 0 then
+        return
+    end
+
+    local current_chapter = mp.get_property_number("chapter", -1)
+
+    -- draw a single nibble at position s
+    local function draw_nibble(ass, s)
+        if slider_lo.gap > 5 then
+            local bar_h = 3
+            if slider_lo.nibbles_top then
+                if slider_lo.nibbles_style == "triangle" then
+                    ass:move_to(s - 3, slider_lo.gap - 5)
+                    ass:line_to(s + 3, slider_lo.gap - 5)
+                    ass:line_to(s, slider_lo.gap - 1)
+                elseif slider_lo.nibbles_style == "bar" then
+                    ass:rect_cw(s - 1, slider_lo.gap - bar_h, s + 1, slider_lo.gap)
+                else
+                    ass:rect_cw(s - 1, slider_lo.gap - bar_h, s + 1, elem_geo.h - slider_lo.gap)
+                end
+            end
+            if slider_lo.nibbles_bottom then
+                if slider_lo.nibbles_style == "triangle" then
+                    ass:move_to(s - 3, elem_geo.h - slider_lo.gap + 5)
+                    ass:line_to(s, elem_geo.h - slider_lo.gap + 1)
+                    ass:line_to(s + 3, elem_geo.h - slider_lo.gap + 5)
+                elseif slider_lo.nibbles_style == "bar" then
+                    ass:rect_cw(s - 1, elem_geo.h - slider_lo.gap, s + 1, elem_geo.h - slider_lo.gap + bar_h)
+                else
+                    ass:rect_cw(s - 1, slider_lo.gap, s + 1, elem_geo.h - slider_lo.gap + bar_h)
+                end
+            end
+        else
+            if slider_lo.nibbles_top then
+                ass:rect_cw(s - 1, 0, s + 1, slider_lo.gap)
+            end
+            if slider_lo.nibbles_bottom then
+                ass:rect_cw(s - 1, elem_geo.h - slider_lo.gap, s + 1, elem_geo.h)
+            end
+        end
+    end
+
+    -- start a new ASS event with the given color
+    local function start_nibble_event(color)
+        elem_ass:draw_stop()
+        elem_ass:merge(element.style_ass)
+        ass_append_alpha(elem_ass, element.layout.alpha, 0)
+        elem_ass:append("{\\blur0\\bord0\\1c&H" .. osc_color_convert(color) .. "&}")
+        elem_ass:merge(element.static_ass)
+    end
+
+    -- draw non-current chapter nibbles
+    local has_non_current = false
+    for n, marker in ipairs(markers) do
+        if (n - 1) ~= current_chapter and marker >= element.slider.min.value and marker <= element.slider.max.value then
+            if not has_non_current then
+                start_nibble_event(user_opts.nibble_color)
+                has_non_current = true
+            end
+            draw_nibble(elem_ass, get_slider_ele_pos_for(element, marker))
+        end
+    end
+
+    -- draw current chapter nibble on top
+    if current_chapter >= 0 and current_chapter < #markers then
+        local marker = markers[current_chapter + 1]
+        if marker >= element.slider.min.value and marker <= element.slider.max.value then
+            start_nibble_event(user_opts.nibble_current_color)
+            draw_nibble(elem_ass, get_slider_ele_pos_for(element, marker))
+        end
+    end
+end
+
 -- Draw seekbar progress more accurately
 local function draw_seekbar_progress(element, elem_ass)
     local pos = element.slider.posF()
@@ -1244,6 +1284,14 @@ local function render_elements(master_ass)
                 local elem_geo = element.layout.geometry
                 local s_min = element.slider.min.value
                 local s_max = element.slider.max.value
+
+                draw_seekbar_nibbles(element, elem_ass)
+
+                -- reset context so handle/progress render on top of nibbles
+                elem_ass:draw_stop()
+                elem_ass:merge(element.style_ass)
+                ass_append_alpha(elem_ass, element.layout.alpha, 0)
+                elem_ass:merge(element.static_ass)
 
                 local xp, rh = draw_seekbar_handle(element, elem_ass) -- handle posistion, handle radius
                 draw_seekbar_progress(element, elem_ass)
@@ -2234,14 +2282,15 @@ layouts["modern-compact"] = function ()
     -- Right side buttons
     local end_x = osc_geo.w - 50
 
-    if user_opts.fullscreen_button then
+    elements.tog_fullscreen.visible = user_opts.fullscreen_button and osc_geo.w >= 100
+    if elements.tog_fullscreen.visible then
         lo = add_layout("tog_fullscreen")
         lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
         lo.style = osc_styles.control_2
         end_x = end_x - 55
     end
 
-    elements.tog_ontop.visible = user_opts.ontop_button and osc_geo.w >= 500
+    elements.tog_ontop.visible = user_opts.ontop_button and osc_geo.w >= 250
     if elements.tog_ontop.visible then
         lo = add_layout("tog_ontop")
         lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
@@ -2249,7 +2298,15 @@ layouts["modern-compact"] = function ()
         end_x = end_x - 55
     end
 
-    elements.sub_track.visible = user_opts.fullscreen_button and sub_track_count > 0 and osc_geo.w >= 600
+    elements.tog_speed.visible = user_opts.speed_button and osc_geo.w >= 300
+    if elements.tog_speed.visible then
+        lo = add_layout("tog_speed")
+        lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
+        lo.style = osc_styles.control_2
+        end_x = end_x - 55
+    end
+
+    elements.sub_track.visible = user_opts.subtitles_button and sub_track_count > 0 and osc_geo.w >= 600
     if elements.sub_track.visible then
         lo = add_layout("sub_track")
         lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
@@ -2257,7 +2314,7 @@ layouts["modern-compact"] = function ()
         end_x = end_x - 55
     end
 
-    elements.audio_track.visible = user_opts.audio_tracks_button and audio_track_count > 1 and osc_geo.w >= 750
+    elements.audio_track.visible = user_opts.audio_tracks_button and audio_track_count > 0 and osc_geo.w >= 750
     if elements.audio_track.visible then
         lo = add_layout("audio_track")
         lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
@@ -2265,15 +2322,17 @@ layouts["modern-compact"] = function ()
         end_x = end_x - 55
     end
 
-    if user_opts.playlist_button then
+    elements.tog_playlist.visible = user_opts.playlist_button and osc_geo.w >= 550
+    if elements.tog_playlist.visible then
         lo = add_layout("tog_playlist")
         lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
         lo.style = osc_styles.control_2
         end_x = end_x - 55
     end
 
-    if user_opts.speed_button then
-        lo = add_layout("tog_speed")
+    elements.download.visible = state.is_URL and user_opts.download_button and osc_geo.w >= 450
+    if elements.download.visible then
+        lo = add_layout("download")
         lo.geometry = {x = end_x, y = refY - 35, an = 5, w = 24, h = 24}
         lo.style = osc_styles.control_2
         end_x = end_x - 55
@@ -3551,7 +3610,7 @@ local function render()
             state.input_enabled = state.osc_visible
         end
 
-        if mouse_hit_coords(cords.x1, cords.y1, cords.x2, cords.y2) and user_opts.osc_keep_with_cursor then
+        if mouse_hit_coords(cords.x1, cords.y1, cords.x2, cords.y2) then
             mouse_over_osc = true
         end
     end
@@ -3565,7 +3624,7 @@ local function render()
                 mp.disable_key_bindings("window-controls")
             end
 
-            if mouse_hit_coords(cords.x1, cords.y1, cords.x2, cords.y2) and user_opts.osc_keep_with_cursor then
+            if mouse_hit_coords(cords.x1, cords.y1, cords.x2, cords.y2) then
                 mouse_over_osc = true
             end
         end
@@ -3585,7 +3644,7 @@ local function render()
                 state.windowcontrols_title = state.osc_visible
             end
 
-            if mouse_hit_coords(cords.x1, cords.y1, cords.x2, cords.y2) and user_opts.osc_keep_with_cursor then
+            if mouse_hit_coords(cords.x1, cords.y1, cords.x2, cords.y2) then
                 mouse_over_osc = true
             end
         end
@@ -3595,7 +3654,7 @@ local function render()
     if state.showtime ~= nil and get_hidetimeout() >= 0 then
         local timeout = state.showtime + (get_hidetimeout() / 1000) - now
         if timeout <= 0 and get_touchtimeout() <= 0 then
-            if state.active_element == nil and not mouse_over_osc then
+            if state.active_element == nil and not mouse_over_osc or not user_opts.osc_keep_with_cursor then
                 hide_osc()
             end
         else
@@ -4043,6 +4102,7 @@ local function validate_user_opts()
         user_opts.chapter_title_color, user_opts.seekbar_cache_color, user_opts.hover_effect_color,
         user_opts.windowcontrols_close_hover, user_opts.windowcontrols_max_hover, user_opts.windowcontrols_min_hover,
         user_opts.cache_info_color, user_opts.thumbnail_border_outline,
+        user_opts.nibble_color, user_opts.nibble_current_color,
     }
 
     for _, color in pairs(colors) do
