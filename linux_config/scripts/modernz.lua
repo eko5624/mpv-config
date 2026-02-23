@@ -1,4 +1,4 @@
--- ModernZ v0.3.0rc (https://github.com/Samillion/ModernZ)
+-- ModernZ v0.3.1rc (https://github.com/Samillion/ModernZ)
 --
 -- This script is a derivative of the original mpv-osc-modern by maoiscat
 -- and subsequent forks:
@@ -192,7 +192,7 @@ local user_opts = {
     -- Miscellaneous settings
     visibility = "auto",                   -- only used at init to set visibility_mode(...)
     visibility_modes = "never_auto_always",-- visibility modes to cycle through
-    tick_delay = 0.03,                     -- minimum interval between OSC redraws (in seconds)
+    tick_delay = 1 / 60,                   -- minimum interval between OSC redraws (in seconds)
     tick_delay_follow_display_fps = false, -- use display FPS as the minimum redraw interval
 
     -- Elements Position
@@ -554,8 +554,8 @@ end
 
 -- internal states, do not touch
 local state = {
-    showtime = nil,                         -- time of last invocation (last mouse move)
-    touchtime = nil,                        -- time of last invocation (last touch event)
+    showtime = mp.get_time(),               -- time of last invocation (last mouse move)
+    touchtime = mp.get_time(),              -- time of last invocation (last touch event)
     touchpoints = {},                       -- current touch points
     osc_visible = false,
     anistart = nil,                         -- time when the animation started
@@ -2174,7 +2174,7 @@ layouts["modern-compact"] = function ()
     lo.geometry = {x = refX, y = refY - 72, an = 5, w = osc_geo.w - 45, h = seekbar_bg_h}
     lo.layer = 13
     lo.style = osc_styles.seekbar_bg
-    lo.box.radius = 2
+    lo.box.radius = user_opts.slider_rounded_corners and 2 or 0
     lo.alpha[1] = 152
     lo.alpha[3] = 128
 
@@ -2184,7 +2184,7 @@ layouts["modern-compact"] = function ()
     lo.layer = 51
     lo.style = osc_styles.seekbar_fg
     lo.slider.gap = (seekbar_h - seekbar_bg_h) / 2.0
-    lo.slider.radius = 2
+    lo.slider.radius = user_opts.slider_rounded_corners and 2 or 0
     lo.slider.tooltip_style = osc_styles.tooltip
     lo.slider.tooltip_an = 2
 
@@ -2237,16 +2237,30 @@ layouts["modern-compact"] = function ()
     local pl_count = mp.get_property_number("playlist-count", 0)
     local pl_pos = mp.get_property_number("playlist-pos", 0) + 1
 
-    if pl_count > 1 and pl_pos > 1 then
+    if pl_count > 1 and pl_pos > 1 and user_opts.track_nextprev_buttons and osc_geo.w >= 500 then
         lo = add_layout("playlist_prev")
         lo.geometry = {x = start_x, y = refY - 35, an = 5, w = 24, h = 24}
         lo.style = osc_styles.control_2
         start_x = start_x + 55
     end
 
-    if pl_count > 1 and pl_pos < pl_count then
+    if pl_count > 1 and pl_pos < pl_count and user_opts.track_nextprev_buttons and osc_geo.w >= 350 then
         lo = add_layout("playlist_next")
         lo.geometry = {x = start_x, y = refY - 35, an = 5, w = 24, h = 24}
+        lo.style = osc_styles.control_2
+        start_x = start_x + 55
+    end
+
+   if user_opts.jump_buttons and osc_geo.w >= 600 then
+        lo = add_layout("jump_backward")
+        lo.geometry = {x = start_x, y = refY - 35, an = 5, w = 30, h = 24}
+        lo.style = (user_opts.jump_icon_number and icons.jump[user_opts.jump_amount] ~= nil) and osc_styles.control_2 or osc_styles.control_2_flip
+        start_x = start_x + 55
+    end
+
+    if user_opts.jump_buttons and osc_geo.w >= 450 then
+        lo = add_layout("jump_forward")
+        lo.geometry = {x = start_x, y = refY - 35, an = 5, w = 30, h = 24}
         lo.style = osc_styles.control_2
         start_x = start_x + 55
     end
@@ -2258,21 +2272,21 @@ layouts["modern-compact"] = function ()
         start_x = start_x + 28
 
         new_element("volumebarbg", "box")
-        elements.volumebar.visible = osc_geo.w >= 750
+        elements.volumebar.visible = osc_geo.w >= 850
         elements.volumebarbg.visible = elements.volumebar.visible
         if elements.volumebar.visible then
             lo = add_layout("volumebarbg")
-            lo.geometry = {x = start_x, y = refY - 35, an = 4, w = 65, h = 3}
+            lo.geometry = {x = start_x, y = refY - 35, an = 4, w = 65, h = 4}
             lo.layer = 13
             lo.alpha[1] = 128
             lo.style = user_opts.volumebar_match_seek_color and osc_styles.seekbar_bg or osc_styles.volumebar_bg
-            lo.box.radius = 2
+            lo.box.radius = user_opts.slider_rounded_corners and 2 or 0
 
             lo = add_layout("volumebar")
-            lo.geometry = {x = start_x, y = refY - 35, an = 4, w = 65, h = 9}
+            lo.geometry = {x = start_x, y = refY - 35, an = 4, w = 65, h = 10}
             lo.style = user_opts.volumebar_match_seek_color and osc_styles.seekbar_fg or osc_styles.volumebar_fg
             lo.slider.gap = 3
-            lo.slider.radius = 1
+            lo.slider.radius = user_opts.slider_rounded_corners and 2 or 0
             lo.slider.tooltip_style = osc_styles.tooltip
             lo.slider.tooltip_an = 2
             start_x = start_x + 75
