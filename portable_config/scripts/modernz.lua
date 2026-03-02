@@ -2778,7 +2778,7 @@ local function osc_init()
     ne.visible = (osc_param.playresx >= (state.is_image and 250 or visible_min_width) - outeroffset)
     ne.content = icons.playlist
     ne.tooltip_style = osc_styles.tooltip
-    ne.tooltipF = user_opts.tooltip_hints and locale.playlist .. "/" .. locale.menu or ""
+    ne.tooltipF = user_opts.tooltip_hints and (have_pl and locale.playlist .. " [" .. pl_pos .. "/" .. pl_count .. "]" or locale.playlist .. " / " .. locale.menu) or ""
     ne.nothingavailable = locale.no_playlist
     ne.eventresponder["mbtn_left_up"] = command_callback(user_opts.playlist_mbtn_left_command)
     ne.eventresponder["mbtn_right_up"] = command_callback(user_opts.playlist_mbtn_right_command)
@@ -2793,7 +2793,7 @@ local function osc_init()
     ne.tooltip_style = osc_styles.tooltip
     ne.tooltipF = function ()
         local prop = mp.get_property("current-tracks/audio/title") or mp.get_property("current-tracks/audio/lang") or locale.na
-        return (locale.audio .. " " .. mp.get_property_number("aid", "-") .. "/" .. audio_track_count .. " [" .. prop .. "]")
+        return (user_opts.tooltip_hints and (locale.audio .. " " .. mp.get_property_number("aid", "-") .. "/" .. audio_track_count .. " [" .. prop .. "]") or "")
     end
     ne.nothingavailable = locale.no_audio
     ne.eventresponder["mbtn_left_up"] = command_callback(user_opts.audio_track_mbtn_left_command)
@@ -2812,7 +2812,7 @@ local function osc_init()
     ne.tooltip_style = osc_styles.tooltip
     ne.tooltipF = function ()
         local prop = mp.get_property("current-tracks/sub/title") or mp.get_property("current-tracks/sub/lang") or locale.na
-        return (locale.subtitle .. " " .. mp.get_property_number("sid", "-") .. "/" .. sub_track_count .. " [" .. prop .. "]")
+        return (user_opts.tooltip_hints and (locale.subtitle .. " " .. mp.get_property_number("sid", "-") .. "/" .. sub_track_count .. " [" .. prop .. "]") or "")
     end
     ne.nothingavailable = locale.no_subs
     ne.eventresponder["mbtn_left_up"] = command_callback(user_opts.sub_track_mbtn_left_command)
@@ -3838,20 +3838,18 @@ mp.observe_property("chapter-list", "native", function(_, list)
     update_duration_watch()
     request_init()
 end)
-mp.observe_property("seeking", "native", function(_, seeking)
-    if user_opts.seek_resets_hidetimeout then
-        reset_timeout()
-    end
-
+mp.register_event("seek", function()
     if state.new_file_flag then
         state.new_file_flag = false
         return
     end
-
-    if seeking and user_opts.osc_on_seek then
-        mp.register_event("seek", show_osc) -- show OSC while seeking
-    else
-        mp.unregister_event(show_osc) -- remove event when seeking stops
+    if user_opts.osc_on_seek then
+        show_osc()
+    end
+end)
+mp.observe_property("seeking", "native", function(_, seeking)
+    if user_opts.seek_resets_hidetimeout then
+        reset_timeout()
     end
 end)
 mp.observe_property("fullscreen", "bool", function(_, val)
