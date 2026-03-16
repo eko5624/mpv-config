@@ -7,9 +7,23 @@ DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 rm -rf $DIR/macos_config/scripts/!("info_ontop.lua")
 rm -rf $DIR/macos_config/scripts-opts/!("info_ontop.conf")
 rm $DIR/macos_config/yt-dlp || true
+mkdir -p $DIR/macos_config/fonts
 mkdir -p $DIR/macos_config/script-opts
 mkdir -p $DIR/macos_config/scripts
 cd $DIR/macos_config
+
+echo "Getting ModernZ"
+echo "============"
+git clone https://github.com/Samillion/ModernZ.git --branch main
+cp -f ModernZ/modernz-icons.ttf fonts
+cp -f ModernZ/modernz.lua scripts
+cp -f ModernZ/extras/pause-indicator-lite/pause_indicator_lite.lua scripts
+cp -f ModernZ/modernz.conf script-opts
+cp -f ModernZ/extras/locale/modernz-locale.json script-opts
+rm -rf ModernZ
+
+# Change ModernZ language from en to zh
+sed -i 's/language=en/language=zh/' script-opts/modernz.conf
 
 echo "Getting SmartCopyPaste_II"
 echo "============"
