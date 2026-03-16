@@ -10,10 +10,12 @@ local options = {
     indicator_icon = "pause",             -- indicator icon type. "pause", "play"
     indicator_stay = true,                -- keep indicator visibile during pause
     indicator_timeout = 0.6,              -- timeout (seconds) if indicator doesn't stay
+    indicator_pos = "middle_center",      -- position of indicator. top_left, top_right, top_center
+                                          -- also: middle_*, bottom_* same as top_* (ie: bottom_right)
 
     -- keybind
-    keybind_allow = true,                 -- allow keybind to toggle pause
-    keybind_set = "mbtn_left",            -- the used keybind to toggle pause
+    keybind_allow = false,                -- allow keybind to toggle pause
+    keybind_set = "shift+mbtn_left",      -- the used keybind to toggle pause
     keybind_mode = "onpause",             -- mode to activate keybind. "onpause", "always"
     keybind_eof_disable = true,           -- disable keybind on eof (end of file)
 
@@ -37,32 +39,48 @@ local options = {
     flash_icon_timeout = 0.3,             -- timeout (seconds) for flash icon
 
     -- icon style used in ModernZ osc
-    icon_theme = "fluent",                 -- set icon theme. accepts "fluent" or "material"
-    themed_icons = false,                 -- requires fonts/fluent-system-icons.ttf or fonts/material-design-icons.ttf
+    icon_theme = "fluent",                -- set icon theme. accepts "fluent" or "material"
+    theme_style = "outline",              -- set theme style. accepts "outline" or "filled"
+    themed_icons = false,                 -- requires fonts/modernz-icons.ttf
     themed_icon_size = 80,                -- themed icon size
 
     -- mute options
-    mute_indicator = false,               -- show a mute indicator (requires fluent font)
-    mute_indicator_pos = "middle_right",  -- position of mute indicator. top_left, top_right, top_center
+    mute_indicator = false,               -- show a mute indicator
+    mute_indicator_pos = "top_right",     -- position of mute indicator. top_left, top_right, top_center
                                           -- also: middle_*, bottom_* same as top_* (ie: bottom_right)
+
+    mute_icon_size = 50,                  -- size of the mute speaker icon
 }
 
 local msg = require "mp.msg"
 require 'mp.options'.read_options(options, "pause_indicator_lite")
 
 local icon_theme = {
-    ["fluent"] = {
-        icon_font = "fluent-system-icons",
-        pause_icon = "\238\163\140",
-        play_icon = "\238\166\143",
-        mute_icon = "\238\173\138",
+    fluent = {
+        filled = {
+            pause_icon = "fluent_pause_filled",
+            play_icon  = "fluent_play_arrow_filled",
+            mute_icon  = "fluent_volume_off_filled"
+        },
+        outline = {
+            pause_icon = "fluent_pause",
+            play_icon  = "fluent_play_arrow",
+            mute_icon  = "fluent_volume_off"
+        }
     },
-    ["material"] = {
-        icon_font = "Material Design Icons",
-        pause_icon = '\243\176\143\164',
-        play_icon = '\243\176\144\138',
-        mute_icon = '\243\176\184\136',
+    material = {
+        filled = {
+            pause_icon = "material_pause_filled",
+            play_icon  = "material_play_arrow_filled",
+            mute_icon  = "material_volume_off_filled"
+        },
+        outline = {
+            pause_icon = "material_pause",
+            play_icon  = "material_play_arrow",
+            mute_icon  = "material_volume_off"
+        }
     },
+    font = "modernz-icons"
 }
 
 -- convert color from hex (adjusted from mpv/osc.lua)
@@ -80,21 +98,39 @@ local function convert_opacity(value)
     return string.format("%02X", (255 - (value * 2.55)))
 end
 
--- colors and opaicty
+-- colors and opacity
 local icon_color = convert_color(options.icon_color)
 local icon_border_color = convert_color(options.icon_border_color)
 local icon_opacity = convert_opacity(options.icon_opacity)
-local icons = icon_theme[options.icon_theme] or icon_theme["fluent"]
-local icon_font = icons.icon_font
+local icons = icon_theme[options.icon_theme] and icon_theme[options.icon_theme][options.theme_style] or icon_theme["fluent"]["outline"]
+local icon_font = icon_theme.font
+
+-- indicator position
+local function icon_pos(pos_opt)
+    local pos = {
+        top_left    = 7, top_center    = 8, top_right    = 9,
+        middle_left = 4, middle_center = 5, middle_right = 6,
+        bottom_left = 1, bottom_center = 2, bottom_right = 3,
+    }
+    return pos[(pos_opt or ""):lower()] or 5
+end
+
+local indicator_pos = icon_pos(options.indicator_pos)
+local mute_indicator_pos = icon_pos(options.mute_indicator_pos)
+
+-- prevent duplicate positions
+if indicator_pos == mute_indicator_pos then
+    mute_indicator_pos = (mute_indicator_pos % 9) + 1
+end
 
 -- pause icon
 local function draw_rectangles()
     if options.themed_icons then
-        return string.format([[{\\rDefault\\an5\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fs%s\\fn%s}%s]],
-            icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.themed_icon_size, icon_font, icons.pause_icon)
+        return string.format([[{\\rDefault\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fs%s\\fn%s}%s]],
+            indicator_pos, icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.themed_icon_size, icon_font, icons.pause_icon)
     else
-        return string.format([[{\\rDefault\\p1\\an5\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&}m 0 0 l %d 0 l %d %d l 0 %d m %d 0 l %d 0 l %d %d l %d %d{\\p0}]],
-            icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.rectangles_width, options.rectangles_width, 
+        return string.format([[{\\rDefault\\p1\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&}m 0 0 l %d 0 l %d %d l 0 %d m %d 0 l %d 0 l %d %d l %d %d{\\p0}]],
+            indicator_pos, icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.rectangles_width, options.rectangles_width, 
             options.rectangles_height, options.rectangles_height, options.rectangles_width + options.rectangles_spacing, 
             options.rectangles_width * 2 + options.rectangles_spacing, options.rectangles_width * 2 + options.rectangles_spacing, 
             options.rectangles_height, options.rectangles_width + options.rectangles_spacing, options.rectangles_height)
@@ -104,32 +140,63 @@ end
 -- play icon
 local function draw_triangle()
     if options.themed_icons then
-        return string.format([[{\\rDefault\\an5\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fs%s\\fn%s}%s]],
-            icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.themed_icon_size, icon_font, icons.play_icon)
+        return string.format([[{\\rDefault\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fs%s\\fn%s}%s]],
+            indicator_pos, icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.themed_icon_size, icon_font, icons.play_icon)
     else
-        return string.format([[{\\rDefault\\p1\\an5\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&}m 0 0 l %d %d l 0 %d{\\p0}]],
-            icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.triangle_width, options.triangle_height / 2, options.triangle_height)
+        return string.format([[{\\rDefault\\p1\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&}m 0 0 l %d %d l 0 %d{\\p0}]],
+            indicator_pos, icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.triangle_width, options.triangle_height / 2, options.triangle_height)
     end
 end
 
 -- mute icon
 local function draw_mute()
-    if not options.themed_icons then return end
+    if options.themed_icons then
+        return string.format([[{\\rDefault\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fs%s\\fn%s}%s]],
+            mute_indicator_pos, icon_opacity, options.icon_border_width,
+            icon_color, icon_border_color, options.mute_icon_size, icon_font, icons.mute_icon)
+    end
 
-    local mute_pos_list = {
-        ["top_left"] = 7,
-        ["top_center"] = 8,
-        ["top_right"] = 9,
-        ["middle_left"] = 4,
-        ["middle_center"] = 5,
-        ["middle_right"] = 6,
-        ["bottom_left"] = 1,
-        ["bottom_center"] = 2,
-        ["bottom_right"] = 3,
-    }
-    local mute_pos = mute_pos_list[options.mute_indicator_pos:lower()] or 6
-    return string.format([[{\\rDefault\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fs%s\\fn%s}%s]],
-        mute_pos, icon_opacity, options.icon_border_width, icon_color, icon_border_color, options.themed_icon_size, icon_font, icons.mute_icon)
+    -- path drawn on a 509.47x430.82 canvas
+    -- fscx/fscy are %, so (target / 509.47 * 100) scales to mute_icon_size
+    local scale = math.floor(options.mute_icon_size / 509.47 * 100 + 0.5)
+
+    -- from Fticons - MIT License
+    -- https://github.com/Financial-Times/fticons
+    local vol_mute = "{\\p1}" ..
+        -- bounding box
+        "m 0 0 m 509.47 430.82 " ..
+        -- speaker shape
+        "m 287.33 0 " ..
+        "l 106.77 135.6 " ..
+        "l 104.06 138.85 " ..
+        "l 0 138.85 " ..
+        "l 0 292.05 " ..
+        "l 104.06 292.05 " ..
+        "l 106.77 295.3 " ..
+        "l 287.33 430.82 " ..
+        "l 304.67 422.16 " ..
+        "l 304.67 8.66 " ..
+        "l 287.33 0 " ..
+        -- X mark
+        "m 487.07 305.01 " ..
+        "l 509.47 282.6 " ..
+        "l 442.27 215.4 " ..
+        "l 509.47 148.2 " ..
+        "l 487.07 125.8 " ..
+        "l 419.87 193 " ..
+        "l 352.67 125.8 " ..
+        "l 330.27 148.2 " ..
+        "l 397.47 215.4 " ..
+        "l 330.27 282.6 " ..
+        "l 352.67 305 " ..
+        "l 419.87 237.8 " ..
+        "l 487.07 305 " ..
+        "{\\p0}"
+
+    return string.format(
+        [[{\\rDefault\\an%s\\alpha&H%s\\bord%s\\1c&H%s&\\3c&H%s&\\fscx%s\\fscy%s}%s]],
+        mute_indicator_pos, icon_opacity, options.icon_border_width,
+        icon_color, icon_border_color, scale, scale, vol_mute)
 end
 
 -- initiate overlay
@@ -223,7 +290,7 @@ mp.observe_property("osd-dimensions", "native", function()
     end
 end)
 
-if options.mute_indicator and options.themed_icons then
+if options.mute_indicator then
     mp.observe_property("mute", "bool", function(_, val)
         if val and not mute.visible then mute_icon() else mute:remove() end
     end)
